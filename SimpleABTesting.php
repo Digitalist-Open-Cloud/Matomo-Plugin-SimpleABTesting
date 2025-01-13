@@ -26,6 +26,19 @@ class SimpleABTesting extends Plugin
         $this->logExperiment = StaticContainer::get(LogExperiment::class);
         $this->experiments = StaticContainer::get(Experiments::class);
     }
+
+    public function registerEvents()
+    {
+        return [
+            'AssetManager.getStylesheetFiles' => 'getStylesheetFiles',
+        ];
+    }
+
+    public function getStylesheetFiles(&$stylesheets)
+    {
+        $stylesheets[] = "plugins/SimpleABTesting/assets/fonts/style.css";
+    }
+
     public function isTrackerPlugin()
     {
         return true;

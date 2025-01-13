@@ -22,7 +22,6 @@ class GetExperimentReport extends Base
         $this->order = 1;
         $this->subcategoryId = $this->name;
         $this->documentation = Piwik::translate('SimpleABTesting_ReportHelpText');
-
     }
 
     /**
@@ -43,5 +42,4 @@ class GetExperimentReport extends Base
         $view->config->translations['nb_unique_visitors'] = Piwik::translate('SimpleABTesting_NbUniqueVisitors');
         $view->config->show_footer_message = true;
     }
-
 }

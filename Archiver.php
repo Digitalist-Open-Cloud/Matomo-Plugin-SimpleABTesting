@@ -23,7 +23,7 @@ class Archiver extends MatomoArchiver
 
         // Step 1: Retrieve archiving parameters from the processor
         $params = $this->getProcessor()->getParams();
-        $idSite  =$this->getProcessor()->getParams()->getSite()->getId();
+        $idSite  = $this->getProcessor()->getParams()->getSite()->getId();
         $dateStart = $params->getDateStart()->toString('Y-m-d 00:00:00');
         $dateEnd = $params->getDateEnd()->toString('Y-m-d 23:59:59');
 

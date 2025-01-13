@@ -107,5 +107,4 @@ class Controller extends \Piwik\Plugin\Controller
         // Render the report and return the view (fetched if required)
         return $view->render();
     }
-
 }
