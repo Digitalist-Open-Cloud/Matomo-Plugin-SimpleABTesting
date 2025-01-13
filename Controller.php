@@ -94,12 +94,13 @@ class Controller extends \Piwik\Plugin\Controller
         Piwik::checkUserHasSomeViewAccess();
         // Build the ViewDataTable object
         $view = Factory::build('table', 'SimpleABTesting.getExperimentData');
-        //$this->setPeriodVariablesView($view);
         $view->config->columns_to_display = ['label', 'nb_visits', 'nb_unique_visitors'];
         $view->config->addTranslation('label', Piwik::translate('SimpleABTesting_ExperimentName'));
         $view->config->addTranslation('nb_visits', Piwik::translate('SimpleABTesting_NbVisits'));
         $view->config->addTranslation('nb_unique_visitors', Piwik::translate('SimpleABTesting_NbUniqueVisitors'));
 
+        $view->config->title = Piwik::translate('SimpleABTesting_ExperimentsReport');
+        $view->config->documentation = Piwik::translate('SimpleABTesting_ReportHelpText');
         // Configure sorting options
         $view->requestConfig->filter_sort_column = 'nb_visits';
         $view->requestConfig->filter_sort_order = 'desc';

@@ -5,6 +5,7 @@ namespace Piwik\Plugins\SimpleABTesting\Reports;
 use Piwik\Piwik;
 use Piwik\Plugin\ViewDataTable;
 use Piwik\Plugins\SimpleABTesting\Columns\ExperimentName;
+use Piwik\Plugins\SimpleABTesting\Reports\Base;
 
 class GetExperimentReport extends Base
 {
@@ -30,7 +31,6 @@ class GetExperimentReport extends Base
     public function configureView(ViewDataTable $view)
     {
         $view->config->show_table = true;
-        $view->config->title = $this->name;
         $view->config->columns_to_display = [
             'label', // Experiment name
             'nb_visits',
