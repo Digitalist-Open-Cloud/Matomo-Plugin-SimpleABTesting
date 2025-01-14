@@ -23,6 +23,7 @@ class LogExperiment
         `created_time` DATETIME NOT NULL,
         `idaction_url` INTEGER UNSIGNED NULL,
         `idaction_name` INTEGER UNSIGNED NULL,
+        `idgoal` INT DEFAULT NULL,
         `category` VARCHAR(255) NOT NULL DEFAULT '',
         PRIMARY KEY (`idlog`)
         )  DEFAULT CHARSET=utf8 ";

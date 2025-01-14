@@ -12,20 +12,13 @@ namespace Piwik\Plugins\SimpleABTesting;
 use Piwik\Common;
 use Piwik\Piwik;
 use Piwik\Db;
-use Exception;
 use Piwik\Plugins\SimpleABTesting\Dao\Experiments;
 use Piwik\Container\StaticContainer;
-use Piwik\ArchiveProcessor\Parameters;
-use Piwik\API\Request;
 use Piwik\DataTable;
 use Piwik\Archive;
-use Piwik\ArchiveProcessor;
 
 /**
- * API for plugin RebelNotifications. With this you can handle notifications to
- * your users of Matomo through the API. Delete, Update, Edit etc.
- *
- * @method static \Piwik\Plugins\RebelNotifications\API getInstance()
+ * API for plugin SimpleABTesting.
  */
 class API extends \Piwik\Plugin\API
 {
@@ -54,23 +47,22 @@ class API extends \Piwik\Plugin\API
     }
 
     /**
-     * Get report data for the experiment report (calls API endpoint).
+     * Get raw report data
+     * @todo - fix so we use date
      */
-    public function getExperimentReportData($idSite, $period, $date)
+    public function getExperimentReportData(int $idSite, string $period, string $date): array
     {
         Piwik::checkUserHasViewAccess($idSite);
-        // SQL query to fetch experiment report data
         $sql = "
             SELECT
                 experiment_name AS `experiment_name`,
+                variant AS `variant`,
                 COUNT(DISTINCT idvisitor) AS `nb_unique_visitors`,
                 COUNT(*) AS `nb_visits`
             FROM " . Common::prefixTable('simple_ab_testing_log') . "
             WHERE idsite = ?
             GROUP BY experiment_name
         ";
-
-        // Fetch and return data
         return Db::fetchAll($sql, [$idSite]);
     }
 
@@ -85,8 +77,7 @@ class API extends \Piwik\Plugin\API
      */
     public function getExperimentData(int $idSite, string $period, string $date, string $segment = null): DataTable
     {
-        // Use Matomo's Archive to fetch the archived data
-        //Piwik::checkUserHasViewAccess($idSite);
+        Piwik::checkUserHasViewAccess($idSite);
         $dataTable = Archive::createDataTableFromArchive(
             Archiver::RECORD_NAME,
             $idSite,
@@ -94,7 +85,6 @@ class API extends \Piwik\Plugin\API
             $date,
             $segment
         );
-       // $data = gzuncompress(hex2bin('789C4BB432B0AAAE0500064F01FE'));
         return $dataTable;
     }
 }

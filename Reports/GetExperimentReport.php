@@ -33,11 +33,13 @@ class GetExperimentReport extends Base
         $view->config->show_table = true;
         $view->config->columns_to_display = [
             'label', // Experiment name
+            'variant',
             'nb_visits',
             'nb_unique_visitors',
         ];
 
         $view->config->translations['label'] = Piwik::translate('SimpleABTesting_ExperimentName');
+        $view->config->translations['variant'] = Piwik::translate('SimpleABTesting_Variant');
         $view->config->translations['nb_visits'] = Piwik::translate('SimpleABTesting_NbVisits');
         $view->config->translations['nb_unique_visitors'] = Piwik::translate('SimpleABTesting_NbUniqueVisitors');
         $view->config->show_footer_message = true;
