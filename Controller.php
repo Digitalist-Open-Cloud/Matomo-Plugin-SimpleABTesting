@@ -94,8 +94,9 @@ class Controller extends \Piwik\Plugin\Controller
         Piwik::checkUserHasSomeViewAccess();
         // Build the ViewDataTable object
         $view = Factory::build('table', 'SimpleABTesting.getExperimentData');
-        $view->config->columns_to_display = ['label', 'nb_visits', 'nb_unique_visitors'];
+        $view->config->columns_to_display = ['label', 'variant', 'nb_visits', 'nb_unique_visitors'];
         $view->config->addTranslation('label', Piwik::translate('SimpleABTesting_ExperimentName'));
+        $view->config->addTranslation('variant', Piwik::translate('SimpleABTesting_Variant'));
         $view->config->addTranslation('nb_visits', Piwik::translate('SimpleABTesting_NbVisits'));
         $view->config->addTranslation('nb_unique_visitors', Piwik::translate('SimpleABTesting_NbUniqueVisitors'));
 

@@ -51,10 +51,15 @@ You can add and delete experiments with Matomo API.
 - `SimpleABTesting.insertExperiment` (idSite, name, hypothesis, description, fromDate, toDate, cssInsert, customJs)
 - `SimpleABTesting.deleteExperiment` (id)
 
+You can also get the experiments:
+
+- `SimpleABTesting.getExperimentReportData` (idSite, period, date) - the raw data
+- `SimpleABTesting.getExperimentData` (idSite, period, date, segment) - the archived data.
+
 ## GDPR and personally identifiable information
 
 Out of the box, this plugin does not store any personal information. With that said, with using JavaScript within an experiment, personal data could be stored somewhere else.
 
 ## Fork
 
-This is a fork of the original [Simple A/B testing-plugin](https://github.com/nofrillsplugins/matomo-simple-ab-testing).
+This is a fork of the original [Simple A/B testing-plugin](https://github.com/nofrillsplugins/matomo-simple-ab-testing), and we are contributing back to the original.

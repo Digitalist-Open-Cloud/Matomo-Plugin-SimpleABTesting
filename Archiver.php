@@ -32,12 +32,13 @@ class Archiver extends MatomoArchiver
         $query = "
             SELECT
                 experiment_name AS label,
+                variant AS variant,
                 COUNT(*) AS nb_visits,
                 COUNT(DISTINCT idvisitor) AS nb_unique_visitors
             FROM " . Common::prefixTable('simple_ab_testing_log') . "
             WHERE idsite = ?
             AND server_time BETWEEN ? AND ?
-            GROUP BY experiment_name
+            GROUP BY experiment_name, variant
         ";
 
         $logger->debug("SimpleABTesting: Running query: {$query}");
@@ -47,7 +48,7 @@ class Archiver extends MatomoArchiver
 
         if (empty($rows)) {
             // Warn if no rows are fetched
-            $logger->warning("SimpleABTesting: No rows fetched for site: {$idSite}");
+            $logger->debug("SimpleABTesting: No rows fetched for site: {$idSite}");
         } else {
             $logger->debug('SimpleABTesting: Rows fetched: ' . print_r($rows, true));
         }
@@ -57,6 +58,7 @@ class Archiver extends MatomoArchiver
         foreach ($rows as $row) {
             $dataTable->addRowFromSimpleArray([
                 'label' => $row['label'],
+                'variant' => $row['variant'],
                 'nb_visits' => $row['nb_visits'],
                 'nb_unique_visitors' => $row['nb_unique_visitors'],
             ]);
