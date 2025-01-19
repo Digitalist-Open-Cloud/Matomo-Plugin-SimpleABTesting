@@ -99,7 +99,6 @@ class Controller extends \Piwik\Plugin\Controller
     {
         $view = new View('@SimpleABTesting/experimentReport');
         $this->setBasicVariablesView($view);
-        $view->graphEvolution = $this->getExperimentEvolutionGraph(array(), array('nb_visits'));
         return $view->render();
     }
 
@@ -121,10 +120,7 @@ class Controller extends \Piwik\Plugin\Controller
      */
     public function getExperimentData()
     {
-        Piwik::checkUserHasViewAccess($this->idSite);
-
-        $view = $this->getLastUnitGraph($this->pluginName, __FUNCTION__, 'SimpleABTesting.getExperimentData');
-        return $this->renderView($view);
+        return $this->renderReport(__FUNCTION__);
     }
 
     /**
@@ -132,16 +128,7 @@ class Controller extends \Piwik\Plugin\Controller
      */
     public function getVariantData()
     {
-        $view = ViewDataTable::build('table');
-        $view->config->show_search = false;
-        $view->config->show_exclude_low_population = false;
-
-        $experimentName = Common::getRequestVar('experimentName', '', 'string');
-        if (!empty($experimentName)) {
-            $view->requestConfig->request_parameters_to_modify['experimentName'] = $experimentName;
-        }
-
-        return $view->render();
+        return $this->renderReport(__FUNCTION__);
     }
 
     public function getExperimentReport($fetch = false)
@@ -165,23 +152,5 @@ class Controller extends \Piwik\Plugin\Controller
         return $view->render();
     }
 
-   /**
-     * Render report with default configuration
-     */
-    protected function renderReport($apiAction, $requestParams = [])
-    {
-        $view = ViewDataTableFactory::build(
-            'table',
-            'SimpleABTesting.' . $apiAction,
-            'SimpleABTesting.' . $apiAction
-        );
 
-        if (!empty($requestParams)) {
-            foreach ($requestParams as $key => $value) {
-                $view->requestConfig->request_parameters_to_modify[$key] = $value;
-            }
-        }
-
-        return $view->render();
-    }
 }

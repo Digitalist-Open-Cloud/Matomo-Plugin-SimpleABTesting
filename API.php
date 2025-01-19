@@ -11,9 +11,6 @@ use Piwik\DataTable;
 
 class API extends \Piwik\Plugin\API
 {
-    /**
-     * @var Experiments
-     */
     private $experiments;
 
     public function __construct()
@@ -21,9 +18,6 @@ class API extends \Piwik\Plugin\API
         $this->experiments = StaticContainer::get(Experiments::class);
     }
 
-    /**
-     * Add an experiment
-     */
     public function insertExperiment(bool $idSite, string $name, string $hypothesis, string $description, string $fromDate, string $toDate, string $cssInsert, string $customJs): void
     {
         Piwik::checkUserHasSomeAdminAccess();
@@ -36,45 +30,23 @@ class API extends \Piwik\Plugin\API
         $this->experiments->deleteExperiment($id);
     }
 
-    /**
-     * Get experiment data
-     */
     public function getExperimentData($idSite, $period, $date, $segment = false)
     {
         Piwik::checkUserHasViewAccess($idSite);
-
         $archive = Archive::build($idSite, $period, $date, $segment);
-        $dataTable = $archive->getDataTable(Archiver::EXPERIMENT_RECORD_NAME);
-
-        // Make sure subtables are loaded
-        $dataTable->enableRecursiveFilters();
-
-        return $dataTable;
+        return $archive->getDataTable(Archiver::EXPERIMENT_RECORD_NAME);
     }
 
-    /**
-     * Get variant data for a specific experiment
-     */
-    public function getVariantData($idSite, $period, $date, $experimentName = '', $segment = false)
+    public function getVariantData($idSite, $period, $date, $segment = false)
     {
         Piwik::checkUserHasViewAccess($idSite);
 
+        $idSubtable = Common::getRequestVar('idSubtable', false);
+        if ($idSubtable === false) {
+            return new DataTable();
+        }
+
         $archive = Archive::build($idSite, $period, $date, $segment);
-        $dataTable = $archive->getDataTable(Archiver::EXPERIMENT_RECORD_NAME);
-
-        // If an experiment name is provided, filter for that specific experiment
-        if (!empty($experimentName)) {
-            $dataTable->filter('Pattern', array('label', $experimentName));
-        }
-
-        // Get the subtable if it exists
-        if ($dataTable->getRowsCount() > 0) {
-            $row = $dataTable->getFirstRow();
-            if ($row->getIdSubDataTable()) {
-                return $archive->getDataTable(Archiver::EXPERIMENT_RECORD_NAME, $row->getIdSubDataTable());
-            }
-        }
-
-        return new DataTable();
+        return $archive->getDataTable(Archiver::EXPERIMENT_RECORD_NAME, $idSubtable);
     }
 }

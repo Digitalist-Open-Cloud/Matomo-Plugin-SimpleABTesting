@@ -5,9 +5,6 @@ use Piwik\Piwik;
 use Piwik\Plugin\Report;
 use Piwik\Plugin\ViewDataTable;
 
-/**
- * @method static GetExperimentData getInstance()
- */
 class GetExperimentData extends Report
 {
     protected $hasSubtable = true;
@@ -37,7 +34,6 @@ class GetExperimentData extends Report
             'nb_uniq_visitors'
         ];
 
-        // Enable subtable features
         $view->config->show_expand_datatable_icon = true;
         $view->config->datatable_js_type = 'SimpleABTestingDataTable';
     }

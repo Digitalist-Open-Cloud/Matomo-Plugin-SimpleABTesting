@@ -9,14 +9,12 @@ use Piwik\Metrics;
 class Archiver extends MatomoArchiver
 {
     const EXPERIMENT_RECORD_NAME = 'SimpleABTesting_experiments';
-    const VARIANT_RECORD_NAME = 'SimpleABTesting_variants';
 
     public function aggregateDayReport()
     {
         $experiments = new DataTable();
         $variants = array();
 
-        // First aggregate experiments
         $experimentQuery = "SELECT
                 experiment_name,
                 COUNT(*) as nb_visits,
@@ -45,7 +43,6 @@ class Archiver extends MatomoArchiver
             ]));
         }
 
-        // Then get variants as subtables
         $variantQuery = "SELECT
                 experiment_name,
                 variant,
@@ -73,7 +70,6 @@ class Archiver extends MatomoArchiver
             ]));
         }
 
-        // Add subtables to experiments
         foreach ($experiments->getRows() as $row) {
             $experimentName = $row->getColumn('label');
             if (isset($variants[$experimentName])) {
