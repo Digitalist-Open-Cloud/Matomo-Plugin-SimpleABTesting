@@ -1,78 +1,102 @@
 <?php
-
 namespace Piwik\Plugins\SimpleABTesting;
 
 use Piwik\Common;
 use Piwik\DataTable;
 use Piwik\Plugin\Archiver as MatomoArchiver;
-use Piwik\Db;
-use Piwik\Log\LoggerInterface;
-use Piwik\Container\StaticContainer;
+use Piwik\Metrics;
 
 class Archiver extends MatomoArchiver
 {
-    const RECORD_NAME = 'SimpleABTesting_ExperimentData';
-    const DIMENSION = 'experiment_name';
+    const EXPERIMENT_RECORD_NAME = 'SimpleABTesting_experiments';
+    const VARIANT_RECORD_NAME = 'SimpleABTesting_variants';
 
     public function aggregateDayReport()
     {
-        // Logger for debugging
-        /** @var LoggerInterface $logger */
-        $logger = StaticContainer::get('Psr\Log\LoggerInterface');
-        $logger->debug('SimpleABTesting: Starting day report aggregation.');
+        $experiments = new DataTable();
+        $variants = array();
 
-        // Step 1: Retrieve archiving parameters from the processor
-        $params = $this->getProcessor()->getParams();
-        $idSite  = $this->getProcessor()->getParams()->getSite()->getId();
-        $dateStart = $params->getDateStart()->toString('Y-m-d 00:00:00');
-        $dateEnd = $params->getDateEnd()->toString('Y-m-d 23:59:59');
-
-        $logger->debug("SimpleABTesting: Archiving params: idSite={$idSite}, dateStart={$dateStart}, dateEnd={$dateEnd}");
-
-        $query = "
-            SELECT
-                experiment_name AS label,
-                variant AS variant,
-                COUNT(*) AS nb_visits,
-                COUNT(DISTINCT idvisitor) AS nb_unique_visitors
+        // First aggregate experiments
+        $experimentQuery = "SELECT
+                experiment_name,
+                COUNT(*) as nb_visits,
+                COUNT(DISTINCT idvisitor) as nb_uniq_visitors
             FROM " . Common::prefixTable('simple_ab_testing_log') . "
             WHERE idsite = ?
-            AND server_time BETWEEN ? AND ?
-            GROUP BY experiment_name, variant
-        ";
+                AND server_time >= ?
+                AND server_time <= ?
+            GROUP BY experiment_name";
 
-        $logger->debug("SimpleABTesting: Running query: {$query}");
+        $bind = array(
+            $this->getProcessor()->getParams()->getSite()->getId(),
+            $this->getProcessor()->getParams()->getDateStart()->getDateStartUTC(),
+            $this->getProcessor()->getParams()->getDateEnd()->getDateEndUTC(),
+        );
 
-        // Execute the query
-        $rows = Db::fetchAll($query, [$idSite, $dateStart, $dateEnd]);
+        $experimentRows = \Piwik\Db::fetchAll($experimentQuery, $bind);
 
-        if (empty($rows)) {
-            // Warn if no rows are fetched
-            $logger->debug("SimpleABTesting: No rows fetched for site: {$idSite}");
-        } else {
-            $logger->debug('SimpleABTesting: Rows fetched: ' . print_r($rows, true));
+        foreach ($experimentRows as $row) {
+            $experiments->addRow(new DataTable\Row([
+                DataTable\Row::COLUMNS => [
+                    'label' => $row['experiment_name'],
+                    Metrics::INDEX_NB_VISITS => (int)$row['nb_visits'],
+                    Metrics::INDEX_NB_UNIQ_VISITORS => (int)$row['nb_uniq_visitors']
+                ]
+            ]));
         }
 
-        // Step 3: Convert SQL rows to DataTable
-        $dataTable = new DataTable();
-        foreach ($rows as $row) {
-            $dataTable->addRowFromSimpleArray([
-                'label' => $row['label'],
-                'variant' => $row['variant'],
-                'nb_visits' => $row['nb_visits'],
-                'nb_unique_visitors' => $row['nb_unique_visitors'],
-            ]);
+        // Then get variants as subtables
+        $variantQuery = "SELECT
+                experiment_name,
+                variant,
+                COUNT(*) as nb_visits,
+                COUNT(DISTINCT idvisitor) as nb_uniq_visitors
+            FROM " . Common::prefixTable('simple_ab_testing_log') . "
+            WHERE idsite = ?
+                AND server_time >= ?
+                AND server_time <= ?
+            GROUP BY experiment_name, variant";
+
+        $variantRows = \Piwik\Db::fetchAll($variantQuery, $bind);
+
+        foreach ($variantRows as $row) {
+            if (!isset($variants[$row['experiment_name']])) {
+                $variants[$row['experiment_name']] = new DataTable();
+            }
+
+            $variants[$row['experiment_name']]->addRow(new DataTable\Row([
+                DataTable\Row::COLUMNS => array(
+                    'label' => $row['variant'],
+                    Metrics::INDEX_NB_VISITS => (int)$row['nb_visits'],
+                    Metrics::INDEX_NB_UNIQ_VISITORS => (int)$row['nb_uniq_visitors']
+                )
+            ]));
         }
 
-        // Step 4: Save the DataTable in archive records as a blob
-        $this->getProcessor()->insertBlobRecord(self::RECORD_NAME, $dataTable->getSerialized());
+        // Add subtables to experiments
+        foreach ($experiments->getRows() as $row) {
+            $experimentName = $row->getColumn('label');
+            if (isset($variants[$experimentName])) {
+                $row->setSubtable($variants[$experimentName]);
+            }
+        }
+
+        $this->getProcessor()->insertBlobRecord(self::EXPERIMENT_RECORD_NAME, $experiments->getSerialized());
     }
 
-    /**
-     * Aggregate data across multiple periods (e.g., week, month, year).
-     */
     public function aggregateMultipleReports()
     {
-        $this->getProcessor()->aggregateDataTableRecords([self::RECORD_NAME]);
+        $columnsAggregationOperation = [
+            Metrics::INDEX_NB_VISITS => 'sum',
+            Metrics::INDEX_NB_UNIQ_VISITORS => 'max'
+        ];
+
+        $this->getProcessor()->aggregateDataTableRecords(
+            [self::EXPERIMENT_RECORD_NAME],
+            $maximumRows = 0,
+            $maximumRowsInSubDataTable = 0,
+            $columnToSort = null,
+            $columnsAggregationOperation
+        );
     }
 }

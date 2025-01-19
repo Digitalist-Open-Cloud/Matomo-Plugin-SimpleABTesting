@@ -15,7 +15,10 @@ use Piwik\Url;
 use Piwik\Plugins\SimpleABTesting\API;
 use Piwik\Plugins\SimpleABTesting\Helpers;
 use Piwik\Request;
-use Piwik\ViewDataTable\Factory;
+use Piwik\View\ViewDataTableFactory;
+use Piwik\Plugin\ViewDataTable;
+use Piwik\View;
+
 
 class Controller extends \Piwik\Plugin\Controller
 {
@@ -89,6 +92,58 @@ class Controller extends \Piwik\Plugin\Controller
         }
     }
 
+    /**
+     * Main report view
+     */
+    public function experimentReport()
+    {
+        $view = new View('@SimpleABTesting/experimentReport');
+        $this->setBasicVariablesView($view);
+        $view->graphEvolution = $this->getExperimentEvolutionGraph(array(), array('nb_visits'));
+        return $view->render();
+    }
+
+    private function getExperimentEvolutionGraph(array $columns = array(), array $defaultColumns = array())
+    {
+        $view = $this->getLastUnitGraph($this->pluginName, __FUNCTION__, 'SimpleABTesting.getExperimentData');
+
+        if (empty($columns)) {
+            $columns = $defaultColumns;
+        }
+
+        $view->config->columns_to_display = $columns;
+
+        return $view;
+    }
+
+    /**
+     * Get experiment data for display
+     */
+    public function getExperimentData()
+    {
+        Piwik::checkUserHasViewAccess($this->idSite);
+
+        $view = $this->getLastUnitGraph($this->pluginName, __FUNCTION__, 'SimpleABTesting.getExperimentData');
+        return $this->renderView($view);
+    }
+
+    /**
+     * Get variant data for display
+     */
+    public function getVariantData()
+    {
+        $view = ViewDataTable::build('table');
+        $view->config->show_search = false;
+        $view->config->show_exclude_low_population = false;
+
+        $experimentName = Common::getRequestVar('experimentName', '', 'string');
+        if (!empty($experimentName)) {
+            $view->requestConfig->request_parameters_to_modify['experimentName'] = $experimentName;
+        }
+
+        return $view->render();
+    }
+
     public function getExperimentReport($fetch = false)
     {
         Piwik::checkUserHasSomeViewAccess();
@@ -107,6 +162,26 @@ class Controller extends \Piwik\Plugin\Controller
         $view->requestConfig->filter_sort_order = 'desc';
 
         // Render the report and return the view (fetched if required)
+        return $view->render();
+    }
+
+   /**
+     * Render report with default configuration
+     */
+    protected function renderReport($apiAction, $requestParams = [])
+    {
+        $view = ViewDataTableFactory::build(
+            'table',
+            'SimpleABTesting.' . $apiAction,
+            'SimpleABTesting.' . $apiAction
+        );
+
+        if (!empty($requestParams)) {
+            foreach ($requestParams as $key => $value) {
+                $view->requestConfig->request_parameters_to_modify[$key] = $value;
+            }
+        }
+
         return $view->render();
     }
 }

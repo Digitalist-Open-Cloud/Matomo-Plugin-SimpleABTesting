@@ -1,0 +1,17 @@
+{% extends 'admin.twig' %}
+
+{% block content %}
+    <div class="simpleABTesting">
+        <div class="card">
+            <div class="card-content">
+                <h2>{{ 'SimpleABTesting_ExperimentsReport'|translate }}</h2>
+                <div class="row">
+                    <div class="col s12">
+                        {{ report|raw }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

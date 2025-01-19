@@ -1,25 +1,14 @@
 <?php
-
-/**
- * Matomo - free/libre analytics platform
- *
- * @link    https://matomo.org
- * @license https://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
- */
-
 namespace Piwik\Plugins\SimpleABTesting;
 
 use Piwik\Common;
 use Piwik\Piwik;
+use Piwik\Archive;
 use Piwik\Db;
 use Piwik\Plugins\SimpleABTesting\Dao\Experiments;
 use Piwik\Container\StaticContainer;
 use Piwik\DataTable;
-use Piwik\Archive;
 
-/**
- * API for plugin SimpleABTesting.
- */
 class API extends \Piwik\Plugin\API
 {
     /**
@@ -31,6 +20,7 @@ class API extends \Piwik\Plugin\API
     {
         $this->experiments = StaticContainer::get(Experiments::class);
     }
+
     /**
      * Add an experiment
      */
@@ -47,44 +37,44 @@ class API extends \Piwik\Plugin\API
     }
 
     /**
-     * Get raw report data
-     * @todo - fix so we use date
+     * Get experiment data
      */
-    public function getExperimentReportData(int $idSite, string $period, string $date): array
+    public function getExperimentData($idSite, $period, $date, $segment = false)
     {
         Piwik::checkUserHasViewAccess($idSite);
-        $sql = "
-            SELECT
-                experiment_name AS `experiment_name`,
-                variant AS `variant`,
-                COUNT(DISTINCT idvisitor) AS `nb_unique_visitors`,
-                COUNT(*) AS `nb_visits`
-            FROM " . Common::prefixTable('simple_ab_testing_log') . "
-            WHERE idsite = ?
-            GROUP BY experiment_name
-        ";
-        return Db::fetchAll($sql, [$idSite]);
+
+        $archive = Archive::build($idSite, $period, $date, $segment);
+        $dataTable = $archive->getDataTable(Archiver::EXPERIMENT_RECORD_NAME);
+
+        // Make sure subtables are loaded
+        $dataTable->enableRecursiveFilters();
+
+        return $dataTable;
     }
 
     /**
-     * Fetch experiment data from the archive blobs for reports or APIs.
-     *
-     * @param int $idSite The site ID.
-     * @param string $period The period (e.g., 'day', 'week', 'month').
-     * @param string $date The date range (e.g., 'today', 'last7', '2024-01-01').
-     * @param string|null $segment The segment string (optional, default is null).
-     * @return DataTable The archived experiment data grouped by experiment_name.
+     * Get variant data for a specific experiment
      */
-    public function getExperimentData(int $idSite, string $period, string $date, string $segment = null): DataTable
+    public function getVariantData($idSite, $period, $date, $experimentName = '', $segment = false)
     {
         Piwik::checkUserHasViewAccess($idSite);
-        $dataTable = Archive::createDataTableFromArchive(
-            Archiver::RECORD_NAME,
-            $idSite,
-            $period,
-            $date,
-            $segment
-        );
-        return $dataTable;
+
+        $archive = Archive::build($idSite, $period, $date, $segment);
+        $dataTable = $archive->getDataTable(Archiver::EXPERIMENT_RECORD_NAME);
+
+        // If an experiment name is provided, filter for that specific experiment
+        if (!empty($experimentName)) {
+            $dataTable->filter('Pattern', array('label', $experimentName));
+        }
+
+        // Get the subtable if it exists
+        if ($dataTable->getRowsCount() > 0) {
+            $row = $dataTable->getFirstRow();
+            if ($row->getIdSubDataTable()) {
+                return $archive->getDataTable(Archiver::EXPERIMENT_RECORD_NAME, $row->getIdSubDataTable());
+            }
+        }
+
+        return new DataTable();
     }
 }

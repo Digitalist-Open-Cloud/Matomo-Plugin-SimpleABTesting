@@ -31,8 +31,15 @@ class SimpleABTesting extends Plugin
     {
         return [
             'AssetManager.getStylesheetFiles' => 'getStylesheetFiles',
+            'Report.getReportMetadata' => 'getReportMetadata'
         ];
     }
+
+    public function getReportMetadata(&$reports)
+{
+    $reports[] = new Reports\GetExperimentData();
+    $reports[] = new Reports\GetVariantData();
+}
 
     public function getStylesheetFiles(&$stylesheets)
     {
