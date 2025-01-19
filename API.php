@@ -37,13 +37,12 @@ class API extends \Piwik\Plugin\API
         return $archive->getDataTable(Archiver::EXPERIMENT_RECORD_NAME);
     }
 
-    public function getVariantData($idSite, $period, $date, $segment = false)
+    public function getVariantData($idSite, $period, $date, $idSubtable = null, $segment = false)
     {
         Piwik::checkUserHasViewAccess($idSite);
 
-        $idSubtable = Common::getRequestVar('idSubtable', false);
-        if ($idSubtable === false) {
-            return new DataTable();
+        if ($idSubtable === null) {
+            $idSubtable = Common::getRequestVar('idSubtable', 0, 'integer');
         }
 
         $archive = Archive::build($idSite, $period, $date, $segment);

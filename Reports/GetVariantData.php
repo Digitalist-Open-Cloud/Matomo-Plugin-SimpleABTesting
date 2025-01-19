@@ -18,6 +18,7 @@ class GetVariantData extends Report
         $this->subcategoryId = 'SimpleABTesting_Experiments';
         $this->order = 2;
         $this->isSubtableReport = true;
+        $this->actionToLoadSubTables = 'getVariantData';
     }
 
     public function configureView(ViewDataTable $view)
@@ -34,6 +35,13 @@ class GetVariantData extends Report
 
         $view->requestConfig->filter_sort_column = 'nb_visits';
         $view->requestConfig->filter_sort_order = 'desc';
+
+        // Enable subtable features
+        $view->config->show_expand_datatable_icon = true;
+        $view->config->show_embedded_subtable = true;
+        $view->config->filters[] = function($dataTable) {
+            $dataTable->enableRecursiveFilters();
+        };
     }
 
     public function getMetrics()
