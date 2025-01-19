@@ -16,7 +16,6 @@ class LogExperiment
         `idsite` INT UNSIGNED NOT NULL,
         `idvisit` BIGINT(10) UNSIGNED NOT NULL,
         `idvisitor` BINARY(8) NOT NULL,
-        `count` INT DEFAULT NULL NULL,
         `experiment_name` VARCHAR(255) NULL,
         `variant` INT DEFAULT NULL NULL,
         `server_time` DATETIME NOT NULL,
