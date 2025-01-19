@@ -10,6 +10,19 @@ class Archiver extends MatomoArchiver
 {
     const EXPERIMENT_RECORD_NAME = 'SimpleABTesting_experiments';
 
+
+    private function getVariantDisplayName($variantId)
+    {
+        switch ($variantId) {
+            case '1':
+                return 'Original';
+            case '2':
+                return 'Variant 1';
+            default:
+                return $variantId;
+        }
+    }
+
     public function aggregateDayReport()
     {
         $experiments = new DataTable();
@@ -37,8 +50,8 @@ class Archiver extends MatomoArchiver
             $experiments->addRow(new DataTable\Row([
                 DataTable\Row::COLUMNS => [
                     'label' => $row['experiment_name'],
-                    Metrics::INDEX_NB_VISITS => (int)$row['nb_visits'],
-                    Metrics::INDEX_NB_UNIQ_VISITORS => (int)$row['nb_uniq_visitors']
+                    'nb_visits' => (int)$row['nb_visits'],
+                    'nb_uniq_visitors' => (int)$row['nb_uniq_visitors']
                 ]
             ]));
         }
@@ -61,11 +74,14 @@ class Archiver extends MatomoArchiver
                 $variants[$row['experiment_name']] = new DataTable();
             }
 
+            $variantName = $row['variant'] === '1' ? 'Original' :
+                          ($row['variant'] === '2' ? 'Variant 1' : $row['variant']);
+
             $variants[$row['experiment_name']]->addRow(new DataTable\Row([
                 DataTable\Row::COLUMNS => array(
-                    'label' => $row['variant'],
-                    Metrics::INDEX_NB_VISITS => (int)$row['nb_visits'],
-                    Metrics::INDEX_NB_UNIQ_VISITORS => (int)$row['nb_uniq_visitors']
+                    'label' => $variantName,
+                    'nb_visits' => (int)$row['nb_visits'],
+                    'nb_uniq_visitors' => (int)$row['nb_uniq_visitors']
                 )
             ]));
         }
@@ -83,8 +99,8 @@ class Archiver extends MatomoArchiver
     public function aggregateMultipleReports()
     {
         $columnsAggregationOperation = [
-            Metrics::INDEX_NB_VISITS => 'sum',
-            Metrics::INDEX_NB_UNIQ_VISITORS => 'max'
+            'nb_visits' => 'sum',
+            'nb_uniq_visitors' => 'max'
         ];
 
         $this->getProcessor()->aggregateDataTableRecords(

@@ -19,6 +19,13 @@
         "Report": "Report",
         "NbVisits": "Number of visits",
         "NbUniqueVisitors": "Number of unique visitors",
+        "Experiments": "A/B Testing",
+        "ExperimentsList": "Experiments List",
+        "Experiment": "Experiment",
+        "ColumnNbVisits": "Visits",
+        "ColumnNbUniqVisitors": "Unique Visitors",
+        "ExperimentsReportDocumentation": "Shows the results of your A/B testing experiments",
+        "VariantsReportDocumentation": "Shows the variants for each experiment",
         "ExperimentsReport": "Experiments Report",
         "Variant": "Variant",
         "ReportHelpText": "Here you can see the reports for your experiments, and when the reports was last archived - reports needs to be archived to show up."

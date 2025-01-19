@@ -34,8 +34,13 @@ class GetExperimentData extends Report
             'nb_uniq_visitors'
         ];
 
+        // Enable subtable features
         $view->config->show_expand_datatable_icon = true;
-        $view->config->datatable_js_type = 'SimpleABTestingDataTable';
+        $view->config->subtable_controller_action = 'getVariantData';
+        $view->config->show_embedded_subtable = true;
+        $view->config->filters[] = function($dataTable) {
+            $dataTable->enableRecursiveFilters();
+        };
     }
 
     public function getMetrics()

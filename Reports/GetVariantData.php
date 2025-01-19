@@ -31,6 +31,9 @@ class GetVariantData extends Report
             'nb_visits',
             'nb_uniq_visitors'
         ];
+
+        $view->requestConfig->filter_sort_column = 'nb_visits';
+        $view->requestConfig->filter_sort_order = 'desc';
     }
 
     public function getMetrics()
