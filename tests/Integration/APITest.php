@@ -1,4 +1,5 @@
 <?php
+
 namespace Piwik\Plugins\SimpleABTesting\tests\Integration;
 
 use Piwik\Tests\Framework\TestCase\IntegrationTestCase;
@@ -223,7 +224,8 @@ class APITest extends IntegrationTestCase
 
         // Insert associated log data
         $logTable = Common::prefixTable('simple_ab_testing_log');
-        Db::query("INSERT INTO " . $logTable . "
+        Db::query(
+            "INSERT INTO " . $logTable . "
             (idsite, idvisitor, server_time, experiment_name, variant) VALUES
             (?, ?, ?, ?, ?)",
             array($this->idSite, bin2hex(random_bytes(8)), '2023-01-01 00:00:00', $name, '1')
@@ -260,117 +262,118 @@ class APITest extends IntegrationTestCase
 
     public function test_insertExperiment_withHtmlInFields()
     {
-    $name = '<script>alert("test")</script>Test';
-    $hypothesis = '<p>Test hypothesis</p>';
+        $name = '<script>alert("test")</script>Test';
+        $hypothesis = '<p>Test hypothesis</p>';
 
-    $this->api->insertExperiment(
-        $this->idSite,
-        $name,
-        $hypothesis,
-        'description',
-        '2023-01-01',
-        '2023-12-31',
-        '',
-        ''
-    );
+        $this->api->insertExperiment(
+            $this->idSite,
+            $name,
+            $hypothesis,
+            'description',
+            '2023-01-01',
+            '2023-12-31',
+            '',
+            ''
+        );
 
-    $table = Common::prefixTable('simple_ab_testing_experiments');
-    $experiment = Db::fetchRow("SELECT * FROM " . $table . " WHERE idsite = ?", array($this->idSite));
+        $table = Common::prefixTable('simple_ab_testing_experiments');
+        $experiment = Db::fetchRow("SELECT * FROM " . $table . " WHERE idsite = ?", array($this->idSite));
 
     // Verify HTML was properly escaped/stripped
-    $this->assertEquals('Test', $experiment['name']);
-    $this->assertEquals('Test hypothesis', $experiment['hypothesis']);
-  }
-
-  public function test_insertExperiment_withMultipleSites()
-  {
-      // Create a second test site
-      $idSite2 = Fixture::createWebsite('2023-01-01');
-
-      // First experiment in site 1
-      $this->api->insertExperiment(
-          $this->idSite,
-          'Test Site 1',  // Different name
-          'hypothesis 1',
-          'description',
-          '2023-01-01',
-          '2023-12-31',
-          '',
-          ''
-      );
-
-      // Second experiment in site 2
-      $this->api->insertExperiment(
-          (int)$idSite2,
-          'Test Site 2',  // Different name
-          'hypothesis 2',
-          'description',
-          '2023-01-01',
-          '2023-12-31',
-          '',
-          ''
-      );
-
-      $table = Common::prefixTable('simple_ab_testing_experiments');
-      $count = Db::fetchOne("SELECT COUNT(*) FROM " . $table); // Count all experiments
-
-      $this->assertEquals(2, $count);
-  }
-  public function test_deleteExperiment_withRunningExperiment()
-  {
-      // Insert experiment
-      $this->api->insertExperiment(
-          $this->idSite,
-          'Test',
-          'hypothesis',
-          'description',
-          Date::factory('today')->toString(),
-          Date::factory('tomorrow')->toString(),
-          '',
-          ''
-      );
-
-      $table = Common::prefixTable('simple_ab_testing_experiments');
-      $experiment = Db::fetchRow("SELECT id FROM " . $table . " WHERE idsite = ? AND name = ?", array($this->idSite, 'Test'));
-
-      // Should not be able to delete a running experiment
-      $this->expectException(\Exception::class);
-      $this->api->deleteExperiment($experiment['id']);
-  }
-
-  public function test_deleteExperiment_cascadeDelete()
-{
-    // Insert experiment with associated data
-    $name = 'Test';
-    $this->api->insertExperiment(
-        $this->idSite,
-        $name,
-        'hypothesis',
-        'description',
-        '2023-01-01',
-        '2023-12-31',
-        '',
-        ''
-    );
-
-    $table = Common::prefixTable('simple_ab_testing_experiments');
-    $experiment = Db::fetchRow("SELECT id FROM " . $table . " WHERE idsite = ? AND name = ?", array($this->idSite, $name));
-
-    // Insert test data
-    $logTable = Common::prefixTable('simple_ab_testing_log');
-    for ($i = 0; $i < 3; $i++) {
-        Db::query("INSERT INTO " . $logTable . "
-            (idsite, idvisitor, server_time, experiment_name, variant) VALUES
-            (?, ?, ?, ?, ?)",
-            array($this->idSite, bin2hex(random_bytes(8)), '2023-01-01 00:00:00', $name, '1')
-        );
+        $this->assertEquals('Test', $experiment['name']);
+        $this->assertEquals('Test hypothesis', $experiment['hypothesis']);
     }
 
-    // Delete experiment
-    $this->api->deleteExperiment($experiment['id']);
+    public function test_insertExperiment_withMultipleSites()
+    {
+        // Create a second test site
+        $idSite2 = Fixture::createWebsite('2023-01-01');
 
-    // Verify all associated data was deleted
-    $logCount = Db::fetchOne("SELECT COUNT(*) FROM " . $logTable . " WHERE experiment_name = ?", array($name));
-    $this->assertEquals(0, $logCount);
-   }
+        // First experiment in site 1
+        $this->api->insertExperiment(
+            $this->idSite,
+            'Test Site 1',  // Different name
+            'hypothesis 1',
+            'description',
+            '2023-01-01',
+            '2023-12-31',
+            '',
+            ''
+        );
+
+        // Second experiment in site 2
+        $this->api->insertExperiment(
+            (int)$idSite2,
+            'Test Site 2',  // Different name
+            'hypothesis 2',
+            'description',
+            '2023-01-01',
+            '2023-12-31',
+            '',
+            ''
+        );
+
+        $table = Common::prefixTable('simple_ab_testing_experiments');
+        $count = Db::fetchOne("SELECT COUNT(*) FROM " . $table); // Count all experiments
+
+        $this->assertEquals(2, $count);
+    }
+    public function test_deleteExperiment_withRunningExperiment()
+    {
+        // Insert experiment
+        $this->api->insertExperiment(
+            $this->idSite,
+            'Test',
+            'hypothesis',
+            'description',
+            Date::factory('today')->toString(),
+            Date::factory('tomorrow')->toString(),
+            '',
+            ''
+        );
+
+        $table = Common::prefixTable('simple_ab_testing_experiments');
+        $experiment = Db::fetchRow("SELECT id FROM " . $table . " WHERE idsite = ? AND name = ?", array($this->idSite, 'Test'));
+
+        // Should not be able to delete a running experiment
+        $this->expectException(\Exception::class);
+        $this->api->deleteExperiment($experiment['id']);
+    }
+
+    public function test_deleteExperiment_cascadeDelete()
+    {
+      // Insert experiment with associated data
+        $name = 'Test';
+        $this->api->insertExperiment(
+            $this->idSite,
+            $name,
+            'hypothesis',
+            'description',
+            '2023-01-01',
+            '2023-12-31',
+            '',
+            ''
+        );
+
+        $table = Common::prefixTable('simple_ab_testing_experiments');
+        $experiment = Db::fetchRow("SELECT id FROM " . $table . " WHERE idsite = ? AND name = ?", array($this->idSite, $name));
+
+      // Insert test data
+        $logTable = Common::prefixTable('simple_ab_testing_log');
+        for ($i = 0; $i < 3; $i++) {
+            Db::query(
+                "INSERT INTO " . $logTable . "
+            (idsite, idvisitor, server_time, experiment_name, variant) VALUES
+            (?, ?, ?, ?, ?)",
+                array($this->idSite, bin2hex(random_bytes(8)), '2023-01-01 00:00:00', $name, '1')
+            );
+        }
+
+      // Delete experiment
+        $this->api->deleteExperiment($experiment['id']);
+
+      // Verify all associated data was deleted
+        $logCount = Db::fetchOne("SELECT COUNT(*) FROM " . $logTable . " WHERE experiment_name = ?", array($name));
+        $this->assertEquals(0, $logCount);
+    }
 }
