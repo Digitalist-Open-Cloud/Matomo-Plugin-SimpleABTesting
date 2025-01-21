@@ -1,7 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Piwik\Plugins\SimpleABTesting\tests\Integration;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use Piwik\Tests\Framework\TestCase\IntegrationTestCase;
 use Piwik\Tests\Framework\Fixture;
 use Piwik\Plugins\SimpleABTesting\Reports\GetExperimentData;
@@ -14,6 +15,7 @@ use Piwik\ViewDataTable\RequestConfig;
  * @group SimpleABTesting_Reports
  * @group Plugins
  */
+#[CoversClass(GetExperimentData::class)]
 class ReportTest extends IntegrationTestCase
 {
     private $idSite;
