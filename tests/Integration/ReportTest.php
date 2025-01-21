@@ -6,6 +6,7 @@ use Piwik\Tests\Framework\Fixture;
 use Piwik\Plugins\SimpleABTesting\Reports\GetExperimentData;
 use Piwik\Plugin\ViewDataTable;
 use Piwik\ViewDataTable\Config as ViewDataTableConfig;
+use Piwik\ViewDataTable\RequestConfig;
 
 /**
  * @group SimpleABTesting
@@ -83,4 +84,77 @@ class ReportTest extends IntegrationTestCase
         $this->assertContains('nb_uniq_visitors', $view->config->columns_to_display);
         $this->assertEquals('getVariantData', $view->config->subtable_controller_action);
     }
+
+    public function test_reportFilters()
+{
+    $report = new GetExperimentData();
+
+    $view = $this->getMockBuilder(ViewDataTable::class)
+        ->disableOriginalConstructor()
+        ->getMock();
+
+    $config = new ViewDataTableConfig();
+    $config->columns_to_display = [];
+
+    $view->config = $config;
+
+    $report->configureView($view);
+
+    // Test that filters array exists
+    $this->assertIsArray($view->config->filters);
+}
+
+public function test_reportTranslations()
+{
+    $report = new GetExperimentData();
+
+    $view = $this->getMockBuilder(ViewDataTable::class)
+        ->disableOriginalConstructor()
+        ->getMock();
+
+    $config = new ViewDataTableConfig();
+    $translations = [];
+    $config->translations = $translations;
+
+    $view->config = $config;
+
+    $report->configureView($view);
+
+    // Verify translations are set
+    $this->assertArrayHasKey('label', $view->config->translations);
+    $this->assertEquals('SimpleABTesting_Experiment', $view->config->translations['label']);
+}
+
+
+public function test_reportDefaultSorting()
+{
+    $report = new GetExperimentData();
+
+    $view = $this->getMockBuilder(ViewDataTable::class)
+        ->disableOriginalConstructor()
+        ->getMock();
+
+    $config = new ViewDataTableConfig();
+    $view->config = $config;
+    $view->requestConfig = new RequestConfig();
+
+    $report->configureView($view);
+
+    //var_dump($view->requestConfig);
+
+    // Test default sorting
+    $this->assertEquals(false, $view->requestConfig->filter_sort_column);
+    $this->assertEquals('desc', $view->requestConfig->filter_sort_order);
+  }
+
+  public function test_reportDocumentation()
+{
+    $report = new GetExperimentData();
+
+    $reflection = new \ReflectionClass($report);
+    $docProperty = $reflection->getProperty('documentation');
+    $docProperty->setAccessible(true);
+
+    $this->assertEquals('SimpleABTesting_ExperimentsReportDocumentation', $docProperty->getValue($report));
+}
 }
