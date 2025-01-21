@@ -2,9 +2,7 @@
 namespace Piwik\Plugins\SimpleABTesting\Reports;
 
 use Piwik\Piwik;
-use Piwik\Plugin\Report;
 use Piwik\Plugin\ViewDataTable;
-use Piwik\DataTable\Filter\PrependRowsWithSummaryRow;
 
 class GetExperimentData extends Base
 {
@@ -34,11 +32,10 @@ class GetExperimentData extends Base
             'nb_uniq_visitors'
         ];
 
-        $view->config->show_export = true;
-        $view->config->show_table = false;
+        $view->config->show_table = true;
+        $view->config->show_pie_chart = false;
         $view->config->show_all_views_icons = false;
         $view->config->subtable_controller_action = 'getVariantData';
-
         $view->config->show_export = true;
     }
 
