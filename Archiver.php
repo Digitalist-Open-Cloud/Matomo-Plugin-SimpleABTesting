@@ -10,23 +10,10 @@ class Archiver extends MatomoArchiver
 {
     const EXPERIMENT_RECORD_NAME = 'SimpleABTesting_experiments';
 
-
-    private function getVariantDisplayName($variantId)
-    {
-        switch ($variantId) {
-            case '1':
-                return 'Original';
-            case '2':
-                return 'Variant 1';
-            default:
-                return $variantId;
-        }
-    }
-
     public function aggregateDayReport()
     {
         $experiments = new DataTable();
-        $variants = array();
+        $variants = [];
 
         $experimentQuery = "SELECT
                 experiment_name,
@@ -74,8 +61,8 @@ class Archiver extends MatomoArchiver
                 $variants[$row['experiment_name']] = new DataTable();
             }
 
-            $variantName = $row['variant'] === '1' ? 'Original' :
-                          ($row['variant'] === '2' ? 'Variant 1' : $row['variant']);
+            $variantName = $row['variant'] == '1' ? 'Original' :
+                          ($row['variant'] == '2' ? 'Variant 1' : $row['variant']);
 
             $variants[$row['experiment_name']]->addRow(new DataTable\Row([
                 DataTable\Row::COLUMNS => array(

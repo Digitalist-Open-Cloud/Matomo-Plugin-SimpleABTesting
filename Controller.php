@@ -15,8 +15,6 @@ use Piwik\Url;
 use Piwik\Plugins\SimpleABTesting\API;
 use Piwik\Plugins\SimpleABTesting\Helpers;
 use Piwik\Request;
-use Piwik\View\ViewDataTableFactory;
-use Piwik\Plugin\ViewDataTable;
 use Piwik\View;
 
 

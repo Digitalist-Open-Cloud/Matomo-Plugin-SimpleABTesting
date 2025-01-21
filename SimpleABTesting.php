@@ -36,10 +36,9 @@ class SimpleABTesting extends Plugin
     }
 
     public function getReportMetadata(&$reports)
-{
-    $reports[] = new Reports\GetExperimentData();
-    $reports[] = new Reports\GetVariantData();
-}
+    {
+        $reports[] = new Reports\GetExperimentData();
+    }
 
     public function getStylesheetFiles(&$stylesheets)
     {
@@ -63,10 +62,10 @@ class SimpleABTesting extends Plugin
         $this->logExperiment->uninstall();
     }
 
-    public function registerReports(): array
-    {
-        return [
-            new GetExperimentReport(), // Register your custom report
-        ];
-    }
+    // public function registerReports(): array
+    // {
+    //     return [
+    //         new GetExperimentReport(), // Register your custom report
+    //     ];
+    // }
 }

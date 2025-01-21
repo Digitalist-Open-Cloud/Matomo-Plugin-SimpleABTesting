@@ -29,6 +29,7 @@
         "ExperimentsReport": "Experiments Report",
         "Variant": "Variant",
         "Variants": "Variants",
-        "ReportHelpText": "Here you can see the reports for your experiments, and when the reports was last archived - reports needs to be archived to show up."
+        "ReportHelpText": "Here you can see the reports for your experiments, and when the reports was last archived - reports needs to be archived to show up.",
+        "VariantsForExperiment": "Variants for this experiment"
     }
 }

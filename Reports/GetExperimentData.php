@@ -4,8 +4,9 @@ namespace Piwik\Plugins\SimpleABTesting\Reports;
 use Piwik\Piwik;
 use Piwik\Plugin\Report;
 use Piwik\Plugin\ViewDataTable;
+use Piwik\DataTable\Filter\PrependRowsWithSummaryRow;
 
-class GetExperimentData extends Report
+class GetExperimentData extends Base
 {
     protected $hasSubtable = true;
     protected $actionToLoadSubTables = 'getVariantData';
@@ -17,7 +18,6 @@ class GetExperimentData extends Report
         $this->name = 'SimpleABTesting_Experiments';
         $this->dimension = null;
         $this->documentation = Piwik::translate('SimpleABTesting_ExperimentsReportDocumentation');
-        $this->categoryId = 'SimpleABTesting_Experiments';
         $this->subcategoryId = 'SimpleABTesting_Experiments';
         $this->order = 1;
     }
@@ -34,14 +34,14 @@ class GetExperimentData extends Report
             'nb_uniq_visitors'
         ];
 
-        // Enable subtable features
-        $view->config->show_expand_datatable_icon = true;
+        $view->config->show_export = true;
+        $view->config->show_table = false;
+        $view->config->show_all_views_icons = false;
         $view->config->subtable_controller_action = 'getVariantData';
-        $view->config->show_embedded_subtable = true;
-        $view->config->filters[] = function($dataTable) {
-            $dataTable->enableRecursiveFilters();
-        };
+
+        $view->config->show_export = true;
     }
+
 
     public function getMetrics()
     {

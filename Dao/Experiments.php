@@ -22,7 +22,7 @@ class Experiments
                   `css_insert` text,
                   `js_insert` text,
                   PRIMARY KEY (`id`),
-                  UNIQUE KEY `unique_name` (`name`)
+                  UNIQUE KEY `unique_site_name` (`idsite`, `name`)
                   )  DEFAULT CHARSET=utf8 ";
             Db::exec($sql);
         } catch (Exception $e) {
@@ -56,7 +56,7 @@ class Experiments
         }
     }
 
-    public function deleteExperiment(bool $id): void
+    public function deleteExperiment(int $id): void
     {
         $query = "DELETE FROM `" . Common::prefixTable('simple_ab_testing_experiments') . "` WHERE id = ?";
         $params = [$id];
