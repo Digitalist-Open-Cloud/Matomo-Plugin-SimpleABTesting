@@ -1,15 +1,13 @@
 <?php
+
 namespace Piwik\Plugins\SimpleABTesting\tests\Integration;
 
 use Piwik\Tests\Framework\TestCase\IntegrationTestCase;
 use Piwik\Tests\Framework\Fixture;
-use Piwik\Date;
 use Piwik\Plugins\SimpleABTesting\Controller;
 use Piwik\Common;
-use Piwik\Request;
 use Piwik\Nonce;
 use Piwik\Tests\Framework\Mock\FakeAccess;
-use Piwik\Access;
 use Exception;
 use Piwik\Db;
 use Piwik\Piwik;
@@ -138,5 +136,4 @@ class ControllerTest extends IntegrationTestCase
         $_POST = array();
         $_GET = array();
     }
-
 }

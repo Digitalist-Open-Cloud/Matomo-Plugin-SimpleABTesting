@@ -17,7 +17,6 @@ use Piwik\Plugins\SimpleABTesting\Helpers;
 use Piwik\Request;
 use Piwik\View;
 
-
 class Controller extends \Piwik\Plugin\Controller
 {
     use Helpers;
@@ -75,15 +74,15 @@ class Controller extends \Piwik\Plugin\Controller
         try {
             $this->securityChecks();
 
-        $redirectUrl = $_POST['redirect_url'];
-        $id = trim(Request::fromRequest()->getIntegerParameter('id', 0));
+            $redirectUrl = $_POST['redirect_url'];
+            $id = trim(Request::fromRequest()->getIntegerParameter('id', 0));
 
-        $api = new API();
-        $api->deleteExperiment($id);
-        Url::redirectToUrl($redirectUrl);
-    } catch (\Exception $e) {
-        throw $e;
-    }
+            $api = new API();
+            $api->deleteExperiment($id);
+            Url::redirectToUrl($redirectUrl);
+        } catch (\Exception $e) {
+            throw $e;
+        }
     }
 
     private function securityChecks()
@@ -164,6 +163,4 @@ class Controller extends \Piwik\Plugin\Controller
         // Render the report and return the view (fetched if required)
         return $view->render();
     }
-
-
 }
