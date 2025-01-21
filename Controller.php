@@ -37,31 +37,34 @@ class Controller extends \Piwik\Plugin\Controller
      */
     public function addExperiment()
     {
-        $this->securityChecks();
+        try {
+            $this->securityChecks();
+            $name = trim(Request::fromRequest()->getStringParameter('name', 'string'));
+            $name = preg_replace('/[^a-zA-Z0-9]/', '', $name);
+            $hypothesis = trim(Request::fromRequest()->getStringParameter('hypothesis', 'string'));
+            $description = trim(Request::fromRequest()->getStringParameter('description', 'string'));
+            $fromDate = trim(Request::fromRequest()->getStringParameter('from_date', 'string'));
+            $toDate = trim(Request::fromRequest()->getStringParameter('to_date', 'string'));
+            $cssInsert = trim(Request::fromRequest()->getStringParameter('css_insert', 'string'));
+            $customJs = trim(Request::fromRequest()->getStringParameter('js_insert', 'string'));
+            $idSite = trim(Request::fromRequest()->getIntegerParameter('idSite', 0));
+            $redirectUrl = $_POST['redirect_url'] . "&message=Experiment%20Created";
 
-        $name = trim(Request::fromRequest()->getStringParameter('name', 'string'));
-        $name = preg_replace('/[^a-zA-Z0-9]/', '', $name);
-        $hypothesis = trim(Request::fromRequest()->getStringParameter('hypothesis', 'string'));
-        $description = trim(Request::fromRequest()->getStringParameter('description', 'string'));
-        $fromDate = trim(Request::fromRequest()->getStringParameter('from_date', 'string'));
-        $toDate = trim(Request::fromRequest()->getStringParameter('to_date', 'string'));
-        $cssInsert = trim(Request::fromRequest()->getStringParameter('css_insert', 'string'));
-        $customJs = trim(Request::fromRequest()->getStringParameter('js_insert', 'string'));
-        $idSite = trim(Request::fromRequest()->getIntegerParameter('idSite', 0));
-        $redirectUrl = $_POST['redirect_url'] . "&message=Experiment%20Created";
-
-        $api = new API();
-        $api->insertExperiment(
-            $idSite,
-            $name,
-            $hypothesis,
-            $description,
-            $fromDate,
-            $toDate,
-            $cssInsert,
-            $customJs
-        );
-        Url::redirectToUrl($redirectUrl);
+            $api = new API();
+            $api->insertExperiment(
+                $idSite,
+                $name,
+                $hypothesis,
+                $description,
+                $fromDate,
+                $toDate,
+                $cssInsert,
+                $customJs
+            );
+            Url::redirectToUrl($redirectUrl);
+        } catch (\Exception $e) {
+            throw $e;
+        }
     }
 
     /**
@@ -69,7 +72,8 @@ class Controller extends \Piwik\Plugin\Controller
      */
     public function delete()
     {
-        $this->securityChecks();
+        try {
+            $this->securityChecks();
 
         $redirectUrl = $_POST['redirect_url'];
         $id = trim(Request::fromRequest()->getIntegerParameter('id', 0));
@@ -77,16 +81,27 @@ class Controller extends \Piwik\Plugin\Controller
         $api = new API();
         $api->deleteExperiment($id);
         Url::redirectToUrl($redirectUrl);
+    } catch (\Exception $e) {
+        throw $e;
+    }
     }
 
     private function securityChecks()
     {
-        $nonce = Common::getRequestVar('nonce', false);
-        //$nonce = trim(Request::fromRequest()->getStringParameter('nonce', 'string'));
+        try {
+            Piwik::checkUserHasSomeAdminAccess();
 
-        if ($_SERVER["REQUEST_METHOD"] != "POST" || !\Piwik\Nonce::verifyNonce('SimpleABTesting.index', $nonce)) {
-            echo "Not allowed. You can go to the <a href='/'>Dashboard / Home</a>.";
-            exit();
+            $nonce = Common::getRequestVar('nonce', '');
+
+            if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+                throw new \Exception(Piwik::translate('General_ExceptionMethodNotAllowed', ['POST']));
+            }
+
+            if (!\Piwik\Nonce::verifyNonce('SimpleABTesting.index', $nonce)) {
+                throw new \Exception(Piwik::translate('General_ExceptionNonceMismatch'));
+            }
+        } catch (\Exception $e) {
+            throw new \Exception(Piwik::translate('General_ExceptionNotAllowed'));
         }
     }
 
