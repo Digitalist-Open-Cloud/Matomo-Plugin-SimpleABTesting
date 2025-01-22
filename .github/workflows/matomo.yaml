@@ -26,3 +26,4 @@ jobs:
           test-type: 'PluginTests'
           matomo-test-branch: ${{ matrix.target }}
           coverage: 'xdebug'
+          coverage-html-report: 'true'
