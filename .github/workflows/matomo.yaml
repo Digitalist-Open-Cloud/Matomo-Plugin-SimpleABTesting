@@ -25,5 +25,5 @@ jobs:
           php-version: ${{ matrix.php }}
           test-type: 'PluginTests'
           matomo-test-branch: ${{ matrix.target }}
-          coverage: 'xdebug'
+          coverage: 'pcov'
           coverage-html-report: 'true'
