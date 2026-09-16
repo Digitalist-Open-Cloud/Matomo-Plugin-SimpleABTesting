@@ -33,8 +33,13 @@ class Experiments
         }
     }
 
-    public function insertExperiment(bool $idSite, string $name, string $hypothesis, string $description, string $fromDate, string $toDate, string $cssInsert, string $customJs)
+    public function insertExperiment(int $idSite, string $name, string $hypothesis, string $description, string $fromDate, string $toDate, string $cssInsert, string $customJs)
     {
+        $error = \Piwik\Plugins\SimpleABTesting\Validation\ExperimentValidator::validateName($name);
+        if ($error !== null) {
+            throw new \InvalidArgumentException($error);
+        }
+
         $query = "INSERT INTO `" . Common::prefixTable('simple_ab_testing_experiments') .
         "` (idsite, name, hypothesis, description, from_date, to_date, css_insert, js_insert) " .
         "VALUES (?,?,?,?,?,?,?,?)";
@@ -52,11 +57,14 @@ class Experiments
             $db = $this->getDb();
             $db->query($query, $params);
         } catch (Exception $e) {
+            if ($db->isErrNo($e, '1062')) {
+                throw new Exception("An experiment named \"{$name}\" already exists. Experiment names must be unique across all sites.");
+            }
             throw $e;
         }
     }
 
-    public function deleteExperiment(bool $id): void
+    public function deleteExperiment(int $id): void
     {
         $query = "DELETE FROM `" . Common::prefixTable('simple_ab_testing_experiments') . "` WHERE id = ?";
         $params = [$id];

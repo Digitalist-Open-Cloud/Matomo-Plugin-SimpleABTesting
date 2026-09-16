@@ -34,13 +34,13 @@ class API extends \Piwik\Plugin\API
     /**
      * Add an experiment
      */
-    public function insertExperiment(bool $idSite, string $name, string $hypothesis, string $description, string $fromDate, string $toDate, string $cssInsert, string $customJs): void
+    public function insertExperiment(int $idSite, string $name, string $hypothesis, string $description, string $fromDate, string $toDate, string $cssInsert, string $customJs): void
     {
         Piwik::checkUserHasSomeAdminAccess();
         $this->experiments->insertExperiment($idSite, $name, $hypothesis, $description, $fromDate, $toDate, $cssInsert, $customJs);
     }
 
-    public function deleteExperiment(bool $id): void
+    public function deleteExperiment(int $id): void
     {
         Piwik::checkUserHasSomeAdminAccess();
         $this->experiments->deleteExperiment($id);
