@@ -50,17 +50,27 @@ class Controller extends \Piwik\Plugin\Controller
         $redirectUrl = $_POST['redirect_url'] . "&message=Experiment%20Created";
 
         $api = new API();
-        $api->insertExperiment(
-            $idSite,
-            $name,
-            $hypothesis,
-            $description,
-            $fromDate,
-            $toDate,
-            $cssInsert,
-            $customJs
-        );
-        Url::redirectToUrl($redirectUrl);
+        try {
+            $api->insertExperiment(
+                $idSite,
+                $name,
+                $hypothesis,
+                $description,
+                $fromDate,
+                $toDate,
+                $cssInsert,
+                $customJs
+            );
+            Url::redirectToUrl($redirectUrl);
+        } catch (\Exception $e) {
+            // The name/overlap validators (Dao\Experiments) throw on an
+            // invalid or overlapping experiment. Without this, that
+            // exception would otherwise reach Matomo's generic error page
+            // instead of the existing redirect-with-message UX this method
+            // already uses on success.
+            $errorRedirectUrl = $_POST['redirect_url'] . "&message=" . urlencode($e->getMessage());
+            Url::redirectToUrl($errorRedirectUrl);
+        }
     }
 
     /**
