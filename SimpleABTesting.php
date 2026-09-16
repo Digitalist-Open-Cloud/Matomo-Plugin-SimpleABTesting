@@ -37,6 +37,7 @@ class SimpleABTesting extends Plugin
     public function getStylesheetFiles(&$stylesheets)
     {
         $stylesheets[] = "plugins/SimpleABTesting/assets/fonts/style.css";
+        $stylesheets[] = "plugins/SimpleABTesting/stylesheets/simpleABTesting.less";
     }
 
     public function isTrackerPlugin()
