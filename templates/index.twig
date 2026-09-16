@@ -25,6 +25,7 @@
                     <div class="col s12 m6 form-field">
                         <label for="hypothesis">Hypothesis</label>
                         <input type="text" name="hypothesis" id="hypothesis">
+                        <span class="form-hint">Describe what you expect and why &mdash; e.g.: &ldquo;Green CTA button increases clicks.&rdquo; &ldquo;Shorter signup form increases completions.&rdquo; &ldquo;Price shown above the fold increases add-to-cart rate.&rdquo;</span>
                     </div>
                 </div>
                 <div class="row">
@@ -49,18 +50,32 @@
                 </div>
 
                 <h3 class="form-section-title">Variant code</h3>
+                <p class="section-help">Fill in CSS insert and/or Custom JS below &mdash; you don't need both. Use CSS for visual changes (colors, spacing, hiding elements) and JS for behavior or text changes.</p>
                 <div class="row">
                     <div class="col s12 code-field">
                         <label for="css_insert">CSS insert (variant 1)</label>
                         <textarea name="css_insert" id="css_insert" class="code-textarea"></textarea>
-                        <span class="form-hint">Example: .h1 { display: none } &mdash; the example code removes the h1 tag.</span>
+                        <div class="form-hint">
+                            Add CSS rules to change how variant 1 looks. Examples:
+                            <ul class="hint-examples">
+                                <li><code>.h1 { display: none; }</code> &mdash; hide the H1</li>
+                                <li><code>.btn { background-color: #ff5722; color: #fff; }</code> &mdash; change button color</li>
+                                <li><code>a { color: #e91e63; }</code> &mdash; change link color</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
                 <div class="row">
                     <div class="col s12 code-field">
                         <label for="js_insert">Custom JS (variant 1)</label>
                         <textarea name="js_insert" id="js_insert" class="code-textarea"></textarea>
-                        <span class="form-hint">Example code removes the h1 tag.</span>
+                        <div class="form-hint">
+                            Add JavaScript to change behavior or text in variant 1. Examples:
+                            <ul class="hint-examples">
+                                <li><code>document.querySelector('h1').style.display = 'none';</code> &mdash; hide the H1</li>
+                                <li><code>document.querySelector('.hero-title').textContent = 'New headline text';</code> &mdash; rewrite an element's text</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
