@@ -26,4 +26,20 @@ final class ExperimentValidator
         }
         return null;
     }
+
+    /**
+     * Whether [$newFrom, $newTo] overlaps any range in $existingRanges.
+     * Inclusive on both ends: two ranges sharing even one day overlap.
+     *
+     * @param array<int, array{from_date: string, to_date: string}> $existingRanges
+     */
+    public static function hasOverlap(array $existingRanges, string $newFrom, string $newTo): bool
+    {
+        foreach ($existingRanges as $range) {
+            if ($newFrom <= $range['to_date'] && $newTo >= $range['from_date']) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
