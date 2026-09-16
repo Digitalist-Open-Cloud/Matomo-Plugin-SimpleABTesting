@@ -8,10 +8,19 @@
   delete-and-reinsert.
 - `getExperimentGoalData` API method, exposing the new per-goal conversion
   record.
+- `getExperimentUniqueVisitorData` API method, exposing the previously
+  unread unique-visitors record (day-only — see `Archiver::recordNamesForMultiPeriod`).
 - A concurrent-experiment guard: a new experiment on a site whose date range
   overlaps an existing one on that site is now rejected.
 - Experiment names containing a comma are rejected (the Tag Manager tag's
   parameter string is comma-joined and never URL-encodes the name).
+- `Updates/0.1.95.php`: invalidates all existing `SimpleABTesting` archives on
+  upgrade. **Upgrade note:** the row shape below (nested subtables with
+  summed parent-row metrics) only applies to archives computed after this
+  update runs — this file makes sure existing installations recompute
+  rather than keep serving the old flat shape indefinitely. Invalidation
+  only marks archives for recomputation on next access; it does not delete
+  any data.
 
 ### Changed
 
@@ -25,7 +34,16 @@
 - Report rows now nest variant (and, for goals, the goal id) as subtables
   instead of flat columns — a flat `variant` column was summed into a
   meaningless number by Matomo's own period rollup as soon as an experiment's
-  data spanned a week/month archive.
+  data spanned a week/month archive. The top-level (and, for goals, the
+  middle/variant-level) row now also carries the real SUM of its subtable's
+  metrics, so the visible row shows real numbers without needing to expand
+  it.
+- `Controller::getExperimentReport()` — the actual live render path Matomo
+  dispatches to — now shows the same corrected columns
+  (`label`, `nb_visits`) as `Reports/GetExperimentReport.php`'s own view
+  config.
+- `Controller::addExperiment()` now redirects with the real validation/
+  overlap error message on failure instead of a raw error page.
 
 ### Deprecated
 
