@@ -152,12 +152,23 @@ class Archiver extends MatomoArchiver
     /**
      * Which archive records are valid to sum across sub-periods (day -> week
      * -> month -> year). A pure, no-Matomo-calls decision so it can be
-     * unit-tested directly: visits and conversions are safely summable (a
-     * Matomo visit belongs to exactly one day), unique VISITORS are not (the
-     * same browser across several days would be counted once per day).
-     * RECORD_NAME_UNIQUE_VISITORS is deliberately absent — Matomo's
-     * archiving then simply stores no multi-period blob for it, rather than
-     * a plausible-looking wrong sum.
+     * unit-tested directly.
+     *
+     * Visits and conversions are summed across periods, same as Matomo's own
+     * nb_visits everywhere. Unique VISITORS are not (the same browser across
+     * several days would be counted once per day) — RECORD_NAME_UNIQUE_VISITORS
+     * is deliberately absent here, so Matomo's archiving stores no multi-period
+     * blob for it rather than a plausible-looking wrong sum.
+     *
+     * Known limitation, inherited from bucketing by server_time (a per-
+     * tracking-request timestamp) rather than by the visit's own day: a visit
+     * that spans midnight emits log rows on both days, so its visit and
+     * conversion counts can each be counted once per day it touches, inflating
+     * a week/month rollup by one for that visit. Narrower than the per-hit
+     * multiplication this task's queries fix (bounded to midnight-crossing
+     * visits, not every tracking hit), and not addressed here — a real fix
+     * would bucket by log_visit.visit_last_action_time instead, which needs
+     * a join this plugin's queries don't currently do.
      *
      * @return string[]
      */
