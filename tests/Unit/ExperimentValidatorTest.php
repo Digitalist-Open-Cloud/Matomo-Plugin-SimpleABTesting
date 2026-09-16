@@ -63,6 +63,17 @@ final class ExperimentValidatorTest extends TestCase
         $this->assertFalse(ExperimentValidator::hasOverlap($existing, '2026-01-16', '2026-01-31'));
     }
 
+    public function test_ranges_sharing_exactly_one_day_do_overlap(): void
+    {
+        // Existing ends on the 15th, new one starts on the 15th too — they
+        // share that one day, so per hasOverlap()'s inclusive-both-ends
+        // contract this MUST be true. (Distinct from
+        // test_adjacent_ranges_do_not_overlap above, which leaves a full
+        // day of separation and never actually exercises the <=/> boundary.)
+        $existing = [['from_date' => '2026-01-01', 'to_date' => '2026-01-15']];
+        $this->assertTrue(ExperimentValidator::hasOverlap($existing, '2026-01-15', '2026-01-31'));
+    }
+
     public function test_no_existing_ranges_means_no_overlap(): void
     {
         $this->assertFalse(ExperimentValidator::hasOverlap([], '2026-01-01', '2026-01-31'));
