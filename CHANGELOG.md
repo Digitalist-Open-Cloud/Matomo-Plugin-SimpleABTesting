@@ -13,7 +13,7 @@
 
 ### Fixed
 
-- **Version numbering.** The archive-invalidation update below was first
+- **Version numbering.** The archive-invalidation update above was first
   written as `Updates/0.1.95.php`, but `plugin.json` had already been bumped
   to 0.1.95 before that file existed. Matomo only executes an `Updates_x_y_z`
   class for a version it has not already recorded in
