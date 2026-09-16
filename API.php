@@ -122,4 +122,32 @@ class API extends \Piwik\Plugin\API
             $segment
         );
     }
+
+    /**
+     * Fetch unique-visitor data from the archive blobs.
+     *
+     * Day-only data: Archiver::RECORD_NAME_UNIQUE_VISITORS is deliberately
+     * excluded from Archiver::recordNamesForMultiPeriod() because a distinct
+     * visitor is not summable across days (the same browser seen on three
+     * different days would be counted three times). A caller requesting
+     * period=week/month/year should therefore expect no data back for this
+     * record, not a wrong (over-counted) number.
+     *
+     * @param int $idSite The site ID.
+     * @param string $period The period (e.g., 'day', 'week', 'month').
+     * @param string $date The date range (e.g., 'today', 'last7', '2024-01-01').
+     * @param string|null $segment The segment string (optional, default is null).
+     * @return DataTable The archived unique-visitor experiment data.
+     */
+    public function getExperimentUniqueVisitorData(int $idSite, string $period, string $date, string $segment = null): DataTable
+    {
+        Piwik::checkUserHasViewAccess($idSite);
+        return Archive::createDataTableFromArchive(
+            Archiver::RECORD_NAME_UNIQUE_VISITORS,
+            $idSite,
+            $period,
+            $date,
+            $segment
+        );
+    }
 }
