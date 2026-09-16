@@ -128,4 +128,31 @@ class Controller extends \Piwik\Plugin\Controller
         // Render the report and return the view (fetched if required)
         return $view->render();
     }
+
+    /**
+     * Subtable action for getExperimentReport()'s expand (+) arrow.
+     *
+     * ViewDataTable::__construct() defaults config->subtable_controller_action
+     * to the bare action name of the apiAction passed to Factory::build()
+     * ('getExperimentData', split from 'SimpleABTesting.getExperimentData') —
+     * so this is the action Matomo's own dataTable.js already requests on
+     * expand. It was simply never defined. Same shape as getExperimentReport():
+     * one experiment's variant rows (label = variant, nb_visits per variant),
+     * scoped via the idSubtable request param that API::getExperimentData()
+     * now forwards to Archive::createDataTableFromArchive().
+     */
+    public function getExperimentData($fetch = false)
+    {
+        Piwik::checkUserHasSomeViewAccess();
+
+        $view = Factory::build('table', 'SimpleABTesting.getExperimentData');
+        $view->config->columns_to_display = ['label', 'nb_visits'];
+        $view->config->addTranslation('label', Piwik::translate('SimpleABTesting_Variant'));
+        $view->config->addTranslation('nb_visits', Piwik::translate('SimpleABTesting_NbVisits'));
+
+        $view->requestConfig->filter_sort_column = 'nb_visits';
+        $view->requestConfig->filter_sort_order = 'desc';
+
+        return $view->render();
+    }
 }
