@@ -46,6 +46,12 @@ class API extends \Piwik\Plugin\API
         $this->experiments->deleteExperiment($id);
     }
 
+    public function updateExperiment(int $id, int $idSite, string $name, string $hypothesis, string $description, string $fromDate, string $toDate, string $cssInsert, string $customJs): void
+    {
+        Piwik::checkUserHasSomeAdminAccess();
+        $this->experiments->updateExperiment($id, $idSite, $name, $hypothesis, $description, $fromDate, $toDate, $cssInsert, $customJs);
+    }
+
     /**
      * Get raw report data
      * @todo - fix so we use date

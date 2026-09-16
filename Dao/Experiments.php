@@ -61,6 +61,25 @@ class Experiments
         }
     }
 
+    public function updateExperiment(int $id, int $idSite, string $name, string $hypothesis, string $description, string $fromDate, string $toDate, string $cssInsert, string $customJs): void
+    {
+        $this->assertValidAndNotOverlapping($idSite, $name, $fromDate, $toDate, $id);
+
+        $query = "UPDATE `" . Common::prefixTable('simple_ab_testing_experiments') . "` SET " .
+            "idsite = ?, name = ?, hypothesis = ?, description = ?, from_date = ?, to_date = ?, css_insert = ?, js_insert = ? " .
+            "WHERE id = ?";
+        $params = [$idSite, $name, $hypothesis, $description, $fromDate, $toDate, $cssInsert, $customJs, $id];
+        try {
+            $db = $this->getDb();
+            $db->query($query, $params);
+        } catch (Exception $e) {
+            if ($db->isErrNo($e, '1062')) {
+                throw new Exception("An experiment named \"{$name}\" already exists. Experiment names must be unique across all sites.");
+            }
+            throw $e;
+        }
+    }
+
     public function deleteExperiment(int $id): void
     {
         $query = "DELETE FROM `" . Common::prefixTable('simple_ab_testing_experiments') . "` WHERE id = ?";
