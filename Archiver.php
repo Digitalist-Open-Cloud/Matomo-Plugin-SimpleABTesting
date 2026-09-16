@@ -224,36 +224,9 @@ class Archiver extends MatomoArchiver
 
     /**
      * Aggregate data across multiple periods (e.g., week, month, year).
-     *
-     * Each record is rolled up in its own try/catch rather than one call
-     * covering both. Live testing traced a real crash to Matomo core's own
-     * BlobTableAggregator ("Label column not found") while merging this
-     * plugin's per-day blobs — and the one time it was caught in the act, the
-     * archive being read had just been flagged DONE_INVALIDATED, i.e. a
-     * second, concurrent archiving/invalidation request had raced this one
-     * for the same site+period. Reproducing it from data shape alone (empty
-     * days mixed with non-empty ones, multiple variants/goals, stale
-     * leftover subtable blobs) consistently failed to trigger it, and
-     * Matomo's own archiver self-heals on the next pass once the race window
-     * closes (confirmed live). So rather than letting one record's transient
-     * failure abort this plugin's entire rollup for the period, log it and
-     * move on; the failed record simply gets retried on the next pass.
      */
     public function aggregateMultipleReports()
     {
-        /** @var LoggerInterface $logger */
-        $logger = StaticContainer::get('Psr\Log\LoggerInterface');
-
-        foreach (self::recordNamesForMultiPeriod() as $recordName) {
-            try {
-                $this->getProcessor()->aggregateDataTableRecords([$recordName]);
-            } catch (\Exception $e) {
-                $logger->warning(
-                    "SimpleABTesting: failed to aggregate record '{record}' for this period, likely a concurrent "
-                    . "archiving/invalidation race; Matomo will retry it on the next archiving pass. Error: {message}",
-                    ['record' => $recordName, 'message' => $e->getMessage()]
-                );
-            }
-        }
+        $this->getProcessor()->aggregateDataTableRecords(self::recordNamesForMultiPeriod());
     }
 }
