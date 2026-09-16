@@ -32,3 +32,15 @@ spl_autoload_register(static function (string $class): void {
         require_once $file;
     }
 });
+
+/**
+ * Archiver.php declares `class Archiver extends \Piwik\Plugin\Archiver`.
+ * This is an empty stub, not a behavioural fake: it exists only so the
+ * subclass can be autoloaded, and nothing here (or under this bootstrap)
+ * instantiates Archiver or calls its non-static, Matomo-dependent methods
+ * (aggregateDayReport(), aggregateMultipleReports()) — those stay verified
+ * live, per this suite's documented scope above.
+ */
+if (!class_exists(\Piwik\Plugin\Archiver::class, false)) {
+    eval('namespace Piwik\Plugin; class Archiver {}');
+}
