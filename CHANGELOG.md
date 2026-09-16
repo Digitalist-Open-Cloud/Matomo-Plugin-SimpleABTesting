@@ -12,6 +12,15 @@
   the earlier 0.1.95 build the update would have been skipped without a word.
   Renamed to 0.1.96 — file, class and `plugin.json` together, since Matomo
   matches update files by filename-as-version.
+- The invalidation is now derived from the plugin's own data instead of
+  sweeping every year from 2010 to the current year for every site. It looks
+  up which sites have `simple_ab_testing_log` rows and what date range each
+  one covers, and invalidates one day per day in that range, clamped so the
+  upper bound never exceeds today. The old sweep expanded to roughly 430
+  queued period recomputations per site-year and, because a `year` period
+  always spans the whole calendar year, queued future-dated days, weeks and
+  months as well. A site with no SimpleABTesting data now correctly has
+  nothing invalidated.
 
 ## [0.1.95] - 2026-09-16
 
