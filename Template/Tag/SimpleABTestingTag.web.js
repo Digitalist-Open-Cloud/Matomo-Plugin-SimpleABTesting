@@ -4,7 +4,6 @@
           const experiment = parameters.get("experiment");
           const parts = experiment.split(",");
           const name = "sabt_" + parts[0];
-          const original_name = parts[0];
           const start = parts[1] + "T00:00:00Z";
           const stop = parts[2] + "T23:59:00Z";
           const css = decodeURIComponent(parts[3].replace(/\+/g, "%20"));
@@ -13,9 +12,9 @@
           const ORIGINAL = "1";
           const VARIANT = "2";
 
-          initExp(_paq, name, start, stop, js, css, original_name);
+          initExp(_paq, name, start, stop, js, css);
 
-          function initExp(_paq, testName, testStartDate, testEndDate, scriptText, cssText, originalName) {
+          function initExp(_paq, testName, testStartDate, testEndDate, scriptText, cssText) {
               let currentVariant = getCookie(testName);
               const currentDate = new Date();
               const startDate = new Date(testStartDate);
@@ -31,14 +30,9 @@
                       try {
                           insertCSS(cssText);
                           insertJS(scriptText);
-                          // Testing to use track event for tests.
-                          // We need a way to catch these with a dimension in the plugin though.
-                          //window._paq.push(["trackEvent", "SimpleABTesting", "Experiment name: " + originalName, 'variant', '2']);
                       } catch (e) {
                           console.error("Error in script execution", e);
                       }
-                  } else {
-                      //window._paq.push(["trackEvent", "SimpleABTesting", "Experiment name: " + originalName, 'original', '1']);
                   }
               }
           }
