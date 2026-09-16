@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.96] - 2026-09-16
+
+### Fixed
+
+- **Version numbering.** The archive-invalidation update below was first
+  written as `Updates/0.1.95.php`, but `plugin.json` had already been bumped
+  to 0.1.95 before that file existed. Matomo only executes an `Updates_x_y_z`
+  class for a version it has not already recorded in
+  `matomo_option.version_SimpleABTesting`, so on any instance that had seen
+  the earlier 0.1.95 build the update would have been skipped without a word.
+  Renamed to 0.1.96 — file, class and `plugin.json` together, since Matomo
+  matches update files by filename-as-version.
+
 ## [0.1.95] - 2026-09-16
 
 ### Added
@@ -14,7 +27,7 @@
   overlaps an existing one on that site is now rejected.
 - Experiment names containing a comma are rejected (the Tag Manager tag's
   parameter string is comma-joined and never URL-encodes the name).
-- `Updates/0.1.95.php`: invalidates all existing `SimpleABTesting` archives on
+- `Updates/0.1.96.php`: invalidates all existing `SimpleABTesting` archives on
   upgrade. **Upgrade note:** the row shape below (nested subtables with
   summed parent-row metrics) only applies to archives computed after this
   update runs — this file makes sure existing installations recompute

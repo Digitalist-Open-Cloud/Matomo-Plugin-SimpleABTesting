@@ -9,7 +9,17 @@ use Piwik\Updater;
 use Piwik\Updates as PiwikUpdates;
 
 /**
- * 0.1.95 — invalidate all existing SimpleABTesting archives.
+ * 0.1.96 — invalidate all existing SimpleABTesting archives.
+ *
+ * Why 0.1.96 and not 0.1.95: plugin.json was already published as 0.1.95
+ * earlier on this branch, before any Updates/ file existed. Matomo records
+ * the installed version in matomo_option.version_SimpleABTesting and only
+ * runs an Updates_x_y_z class for a version it has not already recorded as
+ * done, so an instance that ever saw the earlier 0.1.95 build would never
+ * have executed an Updates/0.1.95.php added afterwards. Matomo matches
+ * update files by filename-as-version, so the filename, the class name and
+ * plugin.json all had to move forward together for the update to be
+ * reachable at all.
  *
  * This release changed the row shape of Archiver::RECORD_NAME (and
  * RECORD_NAME_GOALS): the top-level (and, for goals, middle-level) row now
@@ -44,7 +54,7 @@ use Piwik\Updates as PiwikUpdates;
  * confirmed the same way. $name scopes the invalidation to this plugin only
  * ($forceInvalidateNonexistentRanges=false, matching core's own default).
  */
-class Updates_0_1_95 extends PiwikUpdates
+class Updates_0_1_96 extends PiwikUpdates
 {
     /**
      * @var ArchiveInvalidator
