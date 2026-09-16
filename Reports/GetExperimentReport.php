@@ -31,17 +31,20 @@ class GetExperimentReport extends Base
     public function configureView(ViewDataTable $view)
     {
         $view->config->show_table = true;
+        // variant is now a subtable row (Archiver::buildOneLevelTable), not a
+        // flat column — expand an experiment's row to see nb_visits per
+        // variant. nb_unique_visitors is a separate record
+        // (RECORD_NAME_UNIQUE_VISITORS) not read by this report at all: it is
+        // day-only and does not roll up into week/month totals (see
+        // Archiver::recordNamesForMultiPeriod), so this report — which spans
+        // arbitrary periods — no longer claims to show it.
         $view->config->columns_to_display = [
             'label', // Experiment name
-            'variant',
             'nb_visits',
-            'nb_unique_visitors',
         ];
 
         $view->config->translations['label'] = Piwik::translate('SimpleABTesting_ExperimentName');
-        $view->config->translations['variant'] = Piwik::translate('SimpleABTesting_Variant');
         $view->config->translations['nb_visits'] = Piwik::translate('SimpleABTesting_NbVisits');
-        $view->config->translations['nb_unique_visitors'] = Piwik::translate('SimpleABTesting_NbUniqueVisitors');
         $view->config->show_footer_message = true;
     }
 }

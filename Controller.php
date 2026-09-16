@@ -50,17 +50,27 @@ class Controller extends \Piwik\Plugin\Controller
         $redirectUrl = $_POST['redirect_url'] . "&message=Experiment%20Created";
 
         $api = new API();
-        $api->insertExperiment(
-            $idSite,
-            $name,
-            $hypothesis,
-            $description,
-            $fromDate,
-            $toDate,
-            $cssInsert,
-            $customJs
-        );
-        Url::redirectToUrl($redirectUrl);
+        try {
+            $api->insertExperiment(
+                $idSite,
+                $name,
+                $hypothesis,
+                $description,
+                $fromDate,
+                $toDate,
+                $cssInsert,
+                $customJs
+            );
+            Url::redirectToUrl($redirectUrl);
+        } catch (\Exception $e) {
+            // The name/overlap validators (Dao\Experiments) throw on an
+            // invalid or overlapping experiment. Without this, that
+            // exception would otherwise reach Matomo's generic error page
+            // instead of the existing redirect-with-message UX this method
+            // already uses on success.
+            $errorRedirectUrl = $_POST['redirect_url'] . "&message=" . urlencode($e->getMessage());
+            Url::redirectToUrl($errorRedirectUrl);
+        }
     }
 
     /**
@@ -93,12 +103,21 @@ class Controller extends \Piwik\Plugin\Controller
     {
         Piwik::checkUserHasSomeViewAccess();
         // Build the ViewDataTable object
+        //
+        // This is the actual live render path — Matomo's controller dispatch
+        // prefers this action over Reports/GetExperimentReport.php's own
+        // configureView() whenever both exist. variant is now a subtable row
+        // (Archiver::buildOneLevelTable), not a flat column — expand an
+        // experiment's row to see nb_visits per variant. nb_unique_visitors
+        // is a separate record (Archiver::RECORD_NAME_UNIQUE_VISITORS) not
+        // read by this report at all: it is day-only and does not roll up
+        // into week/month totals (see Archiver::recordNamesForMultiPeriod),
+        // so this report — which spans arbitrary periods — no longer claims
+        // to show it. Keep this in sync with GetExperimentReport::configureView().
         $view = Factory::build('table', 'SimpleABTesting.getExperimentData');
-        $view->config->columns_to_display = ['label', 'variant', 'nb_visits', 'nb_unique_visitors'];
+        $view->config->columns_to_display = ['label', 'nb_visits'];
         $view->config->addTranslation('label', Piwik::translate('SimpleABTesting_ExperimentName'));
-        $view->config->addTranslation('variant', Piwik::translate('SimpleABTesting_Variant'));
         $view->config->addTranslation('nb_visits', Piwik::translate('SimpleABTesting_NbVisits'));
-        $view->config->addTranslation('nb_unique_visitors', Piwik::translate('SimpleABTesting_NbUniqueVisitors'));
 
         $view->config->title = Piwik::translate('SimpleABTesting_ExperimentsReport');
         $view->config->documentation = Piwik::translate('SimpleABTesting_ReportHelpText');
@@ -107,6 +126,33 @@ class Controller extends \Piwik\Plugin\Controller
         $view->requestConfig->filter_sort_order = 'desc';
 
         // Render the report and return the view (fetched if required)
+        return $view->render();
+    }
+
+    /**
+     * Subtable action for getExperimentReport()'s expand (+) arrow.
+     *
+     * ViewDataTable::__construct() defaults config->subtable_controller_action
+     * to the bare action name of the apiAction passed to Factory::build()
+     * ('getExperimentData', split from 'SimpleABTesting.getExperimentData') —
+     * so this is the action Matomo's own dataTable.js already requests on
+     * expand. It was simply never defined. Same shape as getExperimentReport():
+     * one experiment's variant rows (label = variant, nb_visits per variant),
+     * scoped via the idSubtable request param that API::getExperimentData()
+     * now forwards to Archive::createDataTableFromArchive().
+     */
+    public function getExperimentData($fetch = false)
+    {
+        Piwik::checkUserHasSomeViewAccess();
+
+        $view = Factory::build('table', 'SimpleABTesting.getExperimentData');
+        $view->config->columns_to_display = ['label', 'nb_visits'];
+        $view->config->addTranslation('label', Piwik::translate('SimpleABTesting_Variant'));
+        $view->config->addTranslation('nb_visits', Piwik::translate('SimpleABTesting_NbVisits'));
+
+        $view->requestConfig->filter_sort_column = 'nb_visits';
+        $view->requestConfig->filter_sort_order = 'desc';
+
         return $view->render();
     }
 }
