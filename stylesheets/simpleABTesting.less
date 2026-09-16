@@ -7,6 +7,10 @@
         padding: 12px 16px;
         margin: 0 0 20px 0;
         border-radius: 2px;
+
+        &:before {
+            content: none;
+        }
     }
 
     .card {
@@ -25,11 +29,13 @@
         margin-top: 10px;
     }
 
-    .form-field {
+    .form-field,
+    .code-field {
         margin-bottom: 20px;
     }
 
-    .form-field label {
+    .form-field label,
+    .code-field label {
         display: block;
         font-weight: bold;
         font-size: 13px;
@@ -56,18 +62,6 @@
         line-height: 1.4;
     }
 
-    .code-field {
-        margin-bottom: 20px;
-    }
-
-    .code-field label {
-        display: block;
-        font-weight: bold;
-        font-size: 13px;
-        color: #333;
-        margin-bottom: 6px;
-    }
-
     textarea.code-textarea {
         display: block;
         width: 100%;
@@ -83,6 +77,11 @@
 
     .form-actions {
         margin-top: 24px;
+    }
+
+    .table-scroll {
+        width: 100%;
+        overflow-x: auto;
     }
 
     table.simpleABTestingTable {
@@ -107,13 +106,15 @@
         background: #fafafa;
     }
 
-    table.simpleABTestingTable td.code-cell {
+    table.simpleABTestingTable td.code-cell span {
+        display: inline-block;
+        max-width: 220px;
         font-family: Consolas, Monaco, "Courier New", monospace;
         font-size: 12px;
-        max-width: 220px;
-        white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        white-space: nowrap;
+        vertical-align: middle;
     }
 
 }

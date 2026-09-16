@@ -11,6 +11,7 @@
     <div class="card-content">
         <h2>Existing Experiments</h2>
         {% if experiments is not empty %}
+        <div class="table-scroll">
         <table class="simpleABTestingTable">
             <thead>
                 <tr>
@@ -28,8 +29,8 @@
                     <td>{{ experiment.name }}</td>
                     <td>{{ experiment.from_date }}</td>
                     <td>{{ experiment.to_date }}</td>
-                    <td class="code-cell" title="{{ experiment.css_insert }}">{{ experiment.css_insert }}</td>
-                    <td class="code-cell" title="{{ experiment.js_insert }}">{{ experiment.js_insert }}</td>
+                    <td class="code-cell"><span title="{{ experiment.css_insert }}">{{ experiment.css_insert }}</span></td>
+                    <td class="code-cell"><span title="{{ experiment.js_insert }}">{{ experiment.js_insert }}</span></td>
                     <td>
                         <form method="post" action="{{ deleteUrl }}">
                             <input type="hidden" name="nonce" value="{{ nonce }}" >
@@ -42,6 +43,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        </div>
         {% else %}
         <div class="alert">
             No existing experiments for this site.
