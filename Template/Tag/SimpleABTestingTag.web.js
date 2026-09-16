@@ -3,18 +3,20 @@
       this.fire = function () {
           const experiment = parameters.get("experiment");
           const parts = experiment.split(",");
-          const name = "sabt_" + parts[0];
-          const start = parts[1] + "T00:00:00Z";
-          const stop = parts[2] + "T23:59:00Z";
-          const css = decodeURIComponent(parts[3].replace(/\+/g, "%20"));
-          const js = decodeURIComponent(parts[4].replace(/\+/g, "%20"));
+          const expId = parts[0];
+          const expName = parts[1];
+          const cookieName = "sabt_" + expName;
+          const start = parts[2] + "T00:00:00Z";
+          const stop = parts[3] + "T23:59:00Z";
+          const css = decodeURIComponent(parts[4].replace(/\+/g, "%20"));
+          const js = decodeURIComponent(parts[5].replace(/\+/g, "%20"));
           const _paq = (window._paq = window._paq || []);
           const ORIGINAL = "1";
           const VARIANT = "2";
 
-          initExp(_paq, name, start, stop, js, css);
+          initExp(_paq, cookieName, start, stop, js, css, expId, expName);
 
-          function initExp(_paq, testName, testStartDate, testEndDate, scriptText, cssText) {
+          function initExp(_paq, testName, testStartDate, testEndDate, scriptText, cssText, expId, expName) {
               let currentVariant = getCookie(testName);
               const currentDate = new Date();
               const startDate = new Date(testStartDate);
@@ -26,6 +28,9 @@
                       currentVariant = Math.random() < 0.5 ? ORIGINAL : VARIANT;
                       setCookie(testName, currentVariant, testEndDate);
                   }
+                  // Send tracking parameters to Matomo
+                  _paq.push(['appendToTrackingUrl', 'sabt=' + currentVariant + '&sabi=' + expId + '&sabn=' + encodeURIComponent(expName)]);
+
                   if (currentVariant === VARIANT) {
                       try {
                           insertCSS(cssText);

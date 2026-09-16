@@ -115,9 +115,14 @@ class API extends \Piwik\Plugin\API
      * @param string $period The period (e.g., 'day', 'week', 'month').
      * @param string $date The date range (e.g., 'today', 'last7', '2024-01-01').
      * @param string|null $segment The segment string (optional, default is null).
+     * @param bool|int $idSubtable When given, returns one row's subtable
+     *                             (Archiver::buildTwoLevelTable: an
+     *                             experiment's variants, or a variant's
+     *                             goals) instead of the top-level experiment
+     *                             rows.
      * @return DataTable The archived per-goal experiment data.
      */
-    public function getExperimentGoalData(int $idSite, string $period, string $date, string $segment = null): DataTable
+    public function getExperimentGoalData(int $idSite, string $period, string $date, string $segment = null, $idSubtable = false): DataTable
     {
         Piwik::checkUserHasViewAccess($idSite);
         return Archive::createDataTableFromArchive(
@@ -125,7 +130,10 @@ class API extends \Piwik\Plugin\API
             $idSite,
             $period,
             $date,
-            $segment
+            $segment,
+            false,
+            false,
+            $idSubtable
         );
     }
 

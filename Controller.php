@@ -114,7 +114,17 @@ class Controller extends \Piwik\Plugin\Controller
         // into week/month totals (see Archiver::recordNamesForMultiPeriod),
         // so this report — which spans arbitrary periods — no longer claims
         // to show it. Keep this in sync with GetExperimentReport::configureView().
-        $view = Factory::build('table', 'SimpleABTesting.getExperimentData');
+        //
+        // The third Factory::build() argument pins this view's own
+        // self_url/reload target ("controllerAction") to getExperimentReport.
+        // Without it, ViewDataTable::__construct() defaults controllerAction
+        // to the api action ('getExperimentData'), so every interactive
+        // reload of THIS top-level table (sort, page, flatten toggle) would
+        // re-render via getExperimentData() below instead — which sets its
+        // own "Variant" column translation, wrong at this level. Subtable
+        // expand still correctly routes to getExperimentData(): see
+        // Reports/GetExperimentData.php's actionToLoadSubTables.
+        $view = Factory::build('table', 'SimpleABTesting.getExperimentData', 'SimpleABTesting.getExperimentReport');
         $view->config->columns_to_display = ['label', 'nb_visits'];
         $view->config->addTranslation('label', Piwik::translate('SimpleABTesting_ExperimentName'));
         $view->config->addTranslation('nb_visits', Piwik::translate('SimpleABTesting_NbVisits'));
