@@ -21,6 +21,12 @@
   always spans the whole calendar year, queued future-dated days, weeks and
   months as well. A site with no SimpleABTesting data now correctly has
   nothing invalidated.
+- `doUpdate()` skips the invalidation when the plugin is not activated.
+  `ArchiveInvalidator::markArchivesAsInvalidated()` throws in that case, and
+  `Updater::update()` turns any exception from `doUpdate()` into a warning
+  while marking the component successfully updated anyway — so the failure
+  would have been silent and the version bumped regardless. The no-op is now
+  deliberate.
 
 ## [0.1.95] - 2026-09-16
 

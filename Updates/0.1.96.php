@@ -6,6 +6,7 @@ use Piwik\Archive\ArchiveInvalidator;
 use Piwik\Common;
 use Piwik\Date;
 use Piwik\Db;
+use Piwik\Plugin\Manager as PluginManager;
 use Piwik\Updater;
 use Piwik\Updates as PiwikUpdates;
 
@@ -86,6 +87,18 @@ class Updates_0_1_96 extends PiwikUpdates
 
     public function doUpdate(Updater $updater)
     {
+        // Updater::update() catches anything doUpdate() throws, turns it into
+        // a warning, and marks the component successfully updated anyway — so
+        // a throw here is indistinguishable from success and the version
+        // number moves on regardless. markArchivesAsInvalidated() throws
+        // "Plugin is not activated: 'SimpleABTesting'" whenever $name names a
+        // deactivated plugin (core/Archive/ArchiveInvalidator.php), and an
+        // update can legitimately run while the plugin is deactivated. Make
+        // the no-op deliberate instead of an unhandled throw.
+        if (!PluginManager::getInstance()->isPluginActivated(self::PLUGIN_NAME)) {
+            return;
+        }
+
         $today = Date::today();
 
         foreach ($this->getLoggedDateRangePerSite() as $idSite => $range) {
