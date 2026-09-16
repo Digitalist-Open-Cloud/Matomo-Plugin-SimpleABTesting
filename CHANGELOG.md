@@ -2,6 +2,15 @@
 
 ## [0.1.96] - 2026-09-16
 
+### Added
+
+- `Updates/0.1.96.php`: invalidates this plugin's existing archives on
+  upgrade. **Upgrade note:** 0.1.95's row shape (nested subtables with summed
+  parent-row metrics) only applies to archives computed after this update
+  runs — this file makes sure existing installations recompute rather than
+  keep serving the old flat shape indefinitely. Invalidation only marks
+  archives for recomputation on next access; it does not delete any data.
+
 ### Fixed
 
 - **Version numbering.** The archive-invalidation update below was first
@@ -42,13 +51,6 @@
   overlaps an existing one on that site is now rejected.
 - Experiment names containing a comma are rejected (the Tag Manager tag's
   parameter string is comma-joined and never URL-encodes the name).
-- `Updates/0.1.96.php`: invalidates all existing `SimpleABTesting` archives on
-  upgrade. **Upgrade note:** the row shape below (nested subtables with
-  summed parent-row metrics) only applies to archives computed after this
-  update runs — this file makes sure existing installations recompute
-  rather than keep serving the old flat shape indefinitely. Invalidation
-  only marks archives for recomputation on next access; it does not delete
-  any data.
 
 ### Changed
 
