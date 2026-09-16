@@ -93,12 +93,21 @@ class Controller extends \Piwik\Plugin\Controller
     {
         Piwik::checkUserHasSomeViewAccess();
         // Build the ViewDataTable object
+        //
+        // This is the actual live render path — Matomo's controller dispatch
+        // prefers this action over Reports/GetExperimentReport.php's own
+        // configureView() whenever both exist. variant is now a subtable row
+        // (Archiver::buildOneLevelTable), not a flat column — expand an
+        // experiment's row to see nb_visits per variant. nb_unique_visitors
+        // is a separate record (Archiver::RECORD_NAME_UNIQUE_VISITORS) not
+        // read by this report at all: it is day-only and does not roll up
+        // into week/month totals (see Archiver::recordNamesForMultiPeriod),
+        // so this report — which spans arbitrary periods — no longer claims
+        // to show it. Keep this in sync with GetExperimentReport::configureView().
         $view = Factory::build('table', 'SimpleABTesting.getExperimentData');
-        $view->config->columns_to_display = ['label', 'variant', 'nb_visits', 'nb_unique_visitors'];
+        $view->config->columns_to_display = ['label', 'nb_visits'];
         $view->config->addTranslation('label', Piwik::translate('SimpleABTesting_ExperimentName'));
-        $view->config->addTranslation('variant', Piwik::translate('SimpleABTesting_Variant'));
         $view->config->addTranslation('nb_visits', Piwik::translate('SimpleABTesting_NbVisits'));
-        $view->config->addTranslation('nb_unique_visitors', Piwik::translate('SimpleABTesting_NbUniqueVisitors'));
 
         $view->config->title = Piwik::translate('SimpleABTesting_ExperimentsReport');
         $view->config->documentation = Piwik::translate('SimpleABTesting_ReportHelpText');

@@ -112,11 +112,19 @@ class Archiver extends MatomoArchiver
         $grouped = RowGrouper::groupByOneLevel($rows, $identityColumn, $metricColumns);
         $table = new DataTable();
         foreach ($grouped as $label => $identityRows) {
-            $topRow = new Row([Row::COLUMNS => ['label' => $label]]);
             $subtable = new DataTable();
+            $totals = self::zeroedMetrics($metricColumns);
             foreach ($identityRows as $identityValue => $metrics) {
                 $subtable->addRowFromSimpleArray(array_merge(['label' => $identityValue], $metrics));
+                $totals = self::addMetrics($totals, $metrics);
             }
+            // The top-level (experiment) row carries the SUM of its subtable's
+            // metrics, not just the label — without this the visible parent
+            // row (what renders before anyone expands it) shows an empty
+            // nb_visits, even though the real numbers exist one level down.
+            // variant itself stays out of this row entirely: it is an
+            // identity, not a metric (see RowGrouper's own docblock).
+            $topRow = new Row([Row::COLUMNS => array_merge(['label' => $label], $totals)]);
             $topRow->setSubtable($subtable);
             $table->addRow($topRow);
         }
@@ -132,21 +140,58 @@ class Archiver extends MatomoArchiver
         $grouped = RowGrouper::groupByTwoLevels($rows, $outerIdentityColumn, $innerIdentityColumn, $metricColumns);
         $table = new DataTable();
         foreach ($grouped as $label => $outerRows) {
-            $topRow = new Row([Row::COLUMNS => ['label' => $label]]);
             $outerTable = new DataTable();
+            $topTotals = self::zeroedMetrics($metricColumns);
             foreach ($outerRows as $outerValue => $innerRows) {
-                $outerRow = new Row([Row::COLUMNS => ['label' => $outerValue]]);
                 $innerTable = new DataTable();
+                $outerTotals = self::zeroedMetrics($metricColumns);
                 foreach ($innerRows as $innerValue => $metrics) {
                     $innerTable->addRowFromSimpleArray(array_merge(['label' => $innerValue], $metrics));
+                    $outerTotals = self::addMetrics($outerTotals, $metrics);
                 }
+                // The middle-level (variant) row gets metrics summed across
+                // its own goals — same reasoning as buildOneLevelTable's
+                // top-level row, one level down.
+                $outerRow = new Row([Row::COLUMNS => array_merge(['label' => $outerValue], $outerTotals)]);
                 $outerRow->setSubtable($innerTable);
                 $outerTable->addRow($outerRow);
+                $topTotals = self::addMetrics($topTotals, $outerTotals);
             }
+            // The top-level (experiment) row gets metrics summed across ALL
+            // its variants/goals combined.
+            $topRow = new Row([Row::COLUMNS => array_merge(['label' => $label], $topTotals)]);
             $topRow->setSubtable($outerTable);
             $table->addRow($topRow);
         }
         return $table;
+    }
+
+    /**
+     * @param string[] $metricColumns
+     * @return array<string, int>
+     */
+    private static function zeroedMetrics(array $metricColumns): array
+    {
+        return array_fill_keys($metricColumns, 0);
+    }
+
+    /**
+     * Sums each metric column of $metrics into $totals. Pure array
+     * arithmetic — identity columns (variant, idgoal) are never passed in
+     * here, only the already-extracted metric leaf values RowGrouper
+     * produces, so this can never accidentally sum an identity into a
+     * meaningless number the way the un-nested flat rows once did.
+     *
+     * @param array<string, int> $totals
+     * @param array<string, mixed> $metrics
+     * @return array<string, int>
+     */
+    private static function addMetrics(array $totals, array $metrics): array
+    {
+        foreach ($totals as $column => $value) {
+            $totals[$column] = $value + ($metrics[$column] ?? 0);
+        }
+        return $totals;
     }
 
     /**
