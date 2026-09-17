@@ -89,6 +89,11 @@ class GetExperiments extends Widget
             'action' => 'delete'
         ]);
 
+        $updateUrl = Url::getCurrentQueryStringWithParametersModified([
+            'module' => 'SimpleABTesting',
+            'action' => 'updateExperiment'
+        ]);
+
         $today = new \DateTime();
         $oneMonthLater = (clone $today)->modify('+1 month');
 
@@ -106,6 +111,6 @@ class GetExperiments extends Widget
 
         $domain = $this->getSiteDomainFromId($idSite);
 
-        return $this->renderTemplate('experiments', compact('experiments', 'message', 'baseHost', 'domain', 'actionUrl', 'formattedToday', 'formattedOneMonthLater', 'currentUrl', 'refreshUrl', 'deleteUrl', 'nonce'));
+        return $this->renderTemplate('experiments', compact('experiments', 'message', 'baseHost', 'domain', 'actionUrl', 'formattedToday', 'formattedOneMonthLater', 'currentUrl', 'refreshUrl', 'deleteUrl', 'updateUrl', 'nonce', 'idSite'));
     }
 }
