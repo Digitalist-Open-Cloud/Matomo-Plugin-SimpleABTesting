@@ -1,0 +1,96 @@
+{% extends 'admin.twig' %}
+
+{% set title %}{{ 'SimpleABTesting_EditExperiment'|translate }}{% endset %}
+
+{% block topcontrols %}
+    {% include "@CoreHome/_siteSelectHeader.twig" %}
+{% endblock %}
+
+{% block content %}
+<div class="simpleABTestingPlugin">
+    <h1>Edit Experiment</h1>
+
+    {% if message is not empty %}
+    <div class="alert">
+        {{ message }}
+    </div>
+    {% endif %}
+
+    {% if experiment is empty %}
+    <div class="card">
+        <div class="card-content">
+            <div class="alert">
+                This experiment could not be found. It may have been deleted.
+            </div>
+            <a href="{{ backUrl }}" class="btn">Back to experiments</a>
+        </div>
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="card-content">
+            <a href="{{ backUrl }}" class="back-link">&laquo; Back to experiments</a>
+
+            <form method="post" action="{{ updateUrl }}">
+                <input type="hidden" name="redirect_url" value="{{ redirectUrl }}">
+                <input type="hidden" name="nonce" value="{{ nonce }}">
+                <input type="hidden" name="id" value="{{ experiment.id }}">
+                <input type="hidden" name="idSite" value="{{ idSite }}">
+
+                <h3 class="form-section-title">Basic info</h3>
+                <div class="row">
+                    <div class="col s12 m6 form-field">
+                        <label for="name">Experiment Name</label>
+                        <input type="text" name="name" id="name" value="{{ experiment.name }}" required>
+                        <span class="form-hint">Only alphanumeric characters, no spaces &mdash; changing this may reset visitor cookies for this experiment.</span>
+                    </div>
+                    <div class="col s12 m6 form-field">
+                        <label for="hypothesis">Hypothesis</label>
+                        <input type="text" name="hypothesis" id="hypothesis" value="{{ experiment.hypothesis }}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col s12 m6 form-field">
+                        <label for="description">Description</label>
+                        <input type="text" name="description" id="description" value="{{ experiment.description }}">
+                    </div>
+                </div>
+
+                <h3 class="form-section-title">Schedule</h3>
+                <div class="row">
+                    <div class="col s12 m6 form-field">
+                        <label for="from_date">From Date</label>
+                        <input type="date" name="from_date" id="from_date" value="{{ experiment.from_date }}" required>
+                        <span class="form-hint">Starts at 00:00 UTC.</span>
+                    </div>
+                    <div class="col s12 m6 form-field">
+                        <label for="to_date">To Date</label>
+                        <input type="date" name="to_date" id="to_date" value="{{ experiment.to_date }}" required>
+                        <span class="form-hint">Ends at 23:59 UTC.</span>
+                    </div>
+                </div>
+
+                <h3 class="form-section-title">Variant code</h3>
+                <p class="section-help">Fill in CSS insert and/or Custom JS below &mdash; you don't need both.</p>
+                <div class="row">
+                    <div class="col s12 code-field">
+                        <label for="css_insert">CSS insert (variant 1)</label>
+                        <textarea name="css_insert" id="css_insert" class="code-textarea">{{ experiment.css_insert }}</textarea>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col s12 code-field">
+                        <label for="js_insert">Custom JS (variant 1)</label>
+                        <textarea name="js_insert" id="js_insert" class="code-textarea">{{ experiment.js_insert }}</textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <input type="submit" value="Save Changes" class="btn">
+                    <a href="{{ backUrl }}" class="btn btn-flat">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

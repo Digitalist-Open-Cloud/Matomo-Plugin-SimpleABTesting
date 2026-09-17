@@ -80,6 +80,13 @@ class Experiments
         }
     }
 
+    public function getById(int $id, int $idSite): ?array
+    {
+        $query = "SELECT * FROM `" . Common::prefixTable('simple_ab_testing_experiments') . "` WHERE id = ? AND idsite = ?";
+        $row = Db::fetchRow($query, [$id, $idSite]);
+        return $row ?: null;
+    }
+
     public function deleteExperiment(int $id): void
     {
         $query = "DELETE FROM `" . Common::prefixTable('simple_ab_testing_experiments') . "` WHERE id = ?";

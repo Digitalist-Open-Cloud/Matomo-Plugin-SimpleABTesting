@@ -31,13 +31,13 @@
                     <td>{{ experiment.to_date }}</td>
                     <td class="code-cell"><span title="{{ experiment.css_insert }}">{{ experiment.css_insert }}</span></td>
                     <td class="code-cell"><span title="{{ experiment.js_insert }}">{{ experiment.js_insert }}</span></td>
-                    <td>
-                        <button class="btn btn-primary" onclick="openEditModal({{ experiment|json_encode }})">Edit</button>
-                        <form method="post" action="{{ deleteUrl }}" style="display:inline;">
+                    <td class="actions-cell">
+                        <a class="btn" href="{{ editUrl }}&id={{ experiment.id }}">Edit</a>
+                        <form method="post" action="{{ deleteUrl }}">
                             <input type="hidden" name="nonce" value="{{ nonce }}" >
                             <input type="hidden" name="redirect_url" value="{{ currentUrl }}&message=Deleted%20experiment%20{{ experiment.name }}">
                             <input type="hidden" name="id" value="{{ experiment.id }}">
-                            <button type="submit" class="btn btn-danger">Delete</button>
+                            <button type="submit" class="btn btn-delete">Delete</button>
                         </form>
                     </td>
                 </tr>
@@ -52,78 +52,5 @@
         {% endif %}
     </div>
 </div>
-
-<!-- Edit Modal -->
-<div id="editModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;">
-    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:30px;border-radius:5px;width:90%;max-width:500px;">
-        <h2>Edit Experiment</h2>
-        <form id="editForm" method="post" action="{{ updateUrl }}">
-            <input type="hidden" name="nonce" value="{{ nonce }}">
-            <input type="hidden" name="redirect_url" value="{{ currentUrl }}">
-            <input type="hidden" name="idSite" id="editIdSite" value="">
-            <input type="hidden" name="id" id="editId" value="">
-
-            <div style="margin:15px 0;">
-                <label>Name:</label>
-                <input type="text" name="name" id="editName" style="width:100%;padding:5px;">
-            </div>
-            <div style="margin:15px 0;">
-                <label>Hypothesis:</label>
-                <textarea name="hypothesis" id="editHypothesis" style="width:100%;padding:5px;height:60px;"></textarea>
-            </div>
-            <div style="margin:15px 0;">
-                <label>Description:</label>
-                <textarea name="description" id="editDescription" style="width:100%;padding:5px;height:60px;"></textarea>
-            </div>
-            <div style="margin:15px 0;">
-                <label>From Date:</label>
-                <input type="date" name="from_date" id="editFromDate" style="width:100%;padding:5px;">
-            </div>
-            <div style="margin:15px 0;">
-                <label>To Date:</label>
-                <input type="date" name="to_date" id="editToDate" style="width:100%;padding:5px;">
-            </div>
-            <div style="margin:15px 0;">
-                <label>CSS Insert:</label>
-                <textarea name="css_insert" id="editCss" style="width:100%;padding:5px;height:80px;font-family:monospace;"></textarea>
-            </div>
-            <div style="margin:15px 0;">
-                <label>JS Insert:</label>
-                <textarea name="js_insert" id="editJs" style="width:100%;padding:5px;height:80px;font-family:monospace;"></textarea>
-            </div>
-
-            <div style="margin-top:20px;">
-                <button type="submit" class="btn btn-primary">Save Changes</button>
-                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
-            </div>
-        </form>
-    </div>
 </div>
-
-<script>
-function openEditModal(experiment) {
-    document.getElementById('editId').value = experiment.id;
-    document.getElementById('editIdSite').value = experiment.idSite || {{ idSite }};
-    document.getElementById('editName').value = experiment.name;
-    document.getElementById('editHypothesis').value = experiment.hypothesis || '';
-    document.getElementById('editDescription').value = experiment.description || '';
-    document.getElementById('editFromDate').value = experiment.from_date;
-    document.getElementById('editToDate').value = experiment.to_date;
-    document.getElementById('editCss').value = experiment.css_insert || '';
-    document.getElementById('editJs').value = experiment.js_insert || '';
-    document.getElementById('editModal').style.display = 'block';
-}
-
-function closeEditModal() {
-    document.getElementById('editModal').style.display = 'none';
-}
-
-// Close modal when clicking outside
-document.addEventListener('click', function(event) {
-    var modal = document.getElementById('editModal');
-    if (event.target == modal) {
-        closeEditModal();
-    }
-});
-</script>
 {% endblock %}

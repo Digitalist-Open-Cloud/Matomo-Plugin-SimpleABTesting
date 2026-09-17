@@ -113,6 +113,50 @@ class Controller extends \Piwik\Plugin\Controller
     }
 
     /**
+     * Renders a dedicated full page for editing a single experiment.
+     * Reached via a plain link (not a modal) from the Edit action in
+     * experiments.twig; submits back to updateExperiment() above, same
+     * pattern as Goals' "Manage Goals" admin page.
+     */
+    public function editExperimentForm()
+    {
+        Piwik::checkUserHasSomeAdminAccess();
+
+        $idSite = Common::getRequestVar('idSite', 0, 'int');
+        $id = Common::getRequestVar('id', 0, 'int');
+        $period = Common::getRequestVar('period', 'day', 'string');
+        $date = Common::getRequestVar('date', 'today', 'string');
+
+        $backUrl = $this->getCustomUrl($period, $date, 'SimpleABTesting_SimpleABTesting', 'SimpleABTesting_ExistingExperiments');
+
+        $api = new API();
+        $experiment = $api->getExperiment($id, $idSite);
+
+        if ($experiment) {
+            $experiment['css_insert'] = Common::unsanitizeInputValues($experiment['css_insert']);
+            $experiment['js_insert'] = Common::unsanitizeInputValues($experiment['js_insert']);
+        }
+
+        $updateUrl = Url::getCurrentQueryStringWithParametersModified([
+            'module' => 'SimpleABTesting',
+            'action' => 'updateExperiment',
+        ]);
+
+        $nonce = \Piwik\Nonce::getNonce('SimpleABTesting.index');
+        $message = trim(Request::fromRequest()->getStringParameter('message', ''));
+
+        return $this->renderTemplate('edit', [
+            'experiment' => $experiment,
+            'idSite' => $idSite,
+            'updateUrl' => $updateUrl,
+            'redirectUrl' => $backUrl,
+            'backUrl' => $backUrl,
+            'nonce' => $nonce,
+            'message' => $message,
+        ]);
+    }
+
+    /**
      * Delete an experiment.
      */
     public function delete()

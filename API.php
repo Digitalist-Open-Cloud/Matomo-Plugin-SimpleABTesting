@@ -46,6 +46,12 @@ class API extends \Piwik\Plugin\API
         $this->experiments->deleteExperiment($id);
     }
 
+    public function getExperiment(int $id, int $idSite): ?array
+    {
+        Piwik::checkUserHasSomeAdminAccess();
+        return $this->experiments->getById($id, $idSite);
+    }
+
     public function updateExperiment(int $id, int $idSite, string $name, string $hypothesis, string $description, string $fromDate, string $toDate, string $cssInsert, string $customJs): void
     {
         Piwik::checkUserHasSomeAdminAccess();

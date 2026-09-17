@@ -5,6 +5,7 @@
         "SimpleABTestingTagDescription": "Adds a tag for a Simple A\/B Testing experiment",
         "TagChooseExperiment": "Choose experiment",
         "ExistingExperiments": "Existing Experiments",
+        "EditExperiment": "Edit Experiment",
         "CreateNewExperiment": "Create a new experiment",
         "InsertExperiment": "Insert experiment",
         "Tests": "Tests",
