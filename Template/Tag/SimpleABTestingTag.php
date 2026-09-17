@@ -14,7 +14,19 @@ use Piwik\Settings\FieldConfig;
 use Piwik\Plugins\TagManager\Template\Tag\BaseTag;
 use Piwik\Db;
 use Piwik\Common;
+use Piwik\Validators\NotEmpty;
 
+/**
+ * Publishes a stable "id,idSite" reference to one experiment — never the
+ * experiment's own css/js/dates. Those are fetched live at runtime by
+ * SimpleABTestingTag.web.js from Controller::getExperimentPublic(), so
+ * editing an experiment takes effect on the next page load with no need to
+ * re-select it here or republish. (The previous design baked a full
+ * "id,name,from,to,css,js" snapshot into this setting at selection time,
+ * which went stale on every edit — and Matomo's single-select field doesn't
+ * detect a change when the freshly re-fetched option has the same label as
+ * what's already stored, so even manually re-selecting it didn't help.)
+ */
 class SimpleABTestingTag extends BaseTag
 {
     public function getName()
@@ -29,44 +41,45 @@ class SimpleABTestingTag extends BaseTag
 
     public function getParameters()
     {
+        $defaultOrigin = $this->detectMatomoOrigin();
 
         return array(
             $this->makeSetting('experiment', '', FieldConfig::TYPE_STRING, function (FieldConfig $field) {
                 $field->title = Piwik::translate('SimpleABTesting_TagChooseExperiment');
-                ;
                 $field->availableValues = $this->getExperiments();
                 $field->uiControl = FieldConfig::UI_CONTROL_SINGLE_SELECT;
                 $field->description = Piwik::translate('SimpleABTesting_SimpleABTestingTagDescription');
-                ;
-                // Setting availableValues alone makes Matomo re-validate this
-                // exact stored string against a FRESH getExperiments() call
-                // every time this tag is re-saved — including when Tag
-                // Manager copies all of a container's tags forward while
-                // creating a new version, which happens even for tags the
-                // user never touched. The stored value bakes in the
-                // experiment's name/dates/css/js as one string (so the
-                // published JS tag needs no extra runtime lookup), so editing
-                // *any* of those fields, or deleting the experiment, changes
-                // or removes the matching option and throws "value not
-                // allowed" — which then blocks publishing the WHOLE
-                // container, not just this one tag, even ones the user never
-                // touched. Overriding validate() (checked before
-                // availableValues, see Piwik\Settings\Setting::validateValue)
-                // keeps the dropdown UI unchanged for picking a NEW value —
-                // it just stops re-validating an already-stored one against
-                // live experiments at all, since publishing must never be
-                // blockable by an edit or deletion made somewhere else
-                // entirely. A tag whose experiment was since edited or
-                // deleted keeps firing with whatever dates/css/js it already
-                // had baked in — stale rather than blocking; re-selecting the
-                // experiment in this dropdown is still how you pick up a
-                // change.
+                // Bypass Matomo's default re-validation of the stored value
+                // against a fresh availableValues call on every save — a
+                // deleted experiment must not block publishing the whole
+                // container. A tag whose experiment was since deleted just
+                // gets a 404 from getExperimentPublic() at runtime (no-op),
+                // rather than blocking here.
                 $field->validate = function ($value) {
-                    // No-op: FieldConfig::TYPE_STRING already coerces the
-                    // value. Defining validate() at all is what matters here
-                    // — see the comment above.
                 };
             }),
+            $this->makeSetting(
+                'matomoOrigin',
+                $defaultOrigin,
+                FieldConfig::TYPE_STRING,
+                function (FieldConfig $field) use ($defaultOrigin) {
+                    $field->title = 'Matomo origin';
+                    $field->uiControl = FieldConfig::UI_CONTROL_TEXT;
+                    $field->description = 'The origin (scheme + host + port) of your Matomo installation, '
+                        . 'without a trailing slash. Used at runtime to fetch this experiment\'s current '
+                        . 'CSS/JS so edits take effect without republishing.';
+                    $field->inlineHelp = 'Auto-detected from this Matomo instance'
+                        . ($defaultOrigin !== '' ? ': <code>' . $defaultOrigin . '</code>' : '')
+                        . '. Override only if your Matomo is reachable via a different origin than the one you administer it from.';
+                    $field->validators[] = new NotEmpty();
+                    $field->validate = function ($value) {
+                        $value = (string) $value;
+                        if (!preg_match('#^https?://[a-zA-Z0-9.\-]+(:[0-9]+)?$#', $value)) {
+                            throw new \Exception('Matomo origin must look like https://host[:port] with no path.');
+                        }
+                    };
+                }
+            ),
         );
     }
 
@@ -75,28 +88,46 @@ class SimpleABTestingTag extends BaseTag
         return self::CATEGORY_DEVELOPERS;
     }
 
+    /**
+     * Options are keyed "id,idSite" — a reference, not a snapshot. Stable
+     * for the experiment's lifetime; only changes if the experiment is
+     * deleted and recreated.
+     */
     private function getExperiments()
     {
         $idSite = Common::getRequestVar('idSite', 0, 'int');
-        $sql = "SELECT id, name, from_date, to_date, css_insert, js_insert FROM " . Common::prefixTable('simple_ab_testing_experiments') . " WHERE idsite = ?";
+        $sql = "SELECT id, name FROM " . Common::prefixTable('simple_ab_testing_experiments') . " WHERE idsite = ?";
         $result = Db::fetchAll($sql, [$idSite]);
 
         $options = [];
         foreach ($result as $experiment) {
-            $cssInsert = urlencode($experiment['css_insert']);
-            $jsInsert = urlencode($experiment['js_insert']);
-
-            // Create a string of concatenated values for the experiment
-            $values = $experiment['id'] . ','
-                . $experiment['name'] . ','
-                . $experiment['from_date'] . ','
-                . $experiment['to_date'] . ','
-                . $cssInsert . ','
-                . $jsInsert . ',';
-
-            // Use the experiment name as the key and values as the value
-            $options[$values] = $experiment['name'];
+            $options[$experiment['id'] . ',' . $idSite] = $experiment['name'];
         }
         return $options;
+    }
+
+    /**
+     * Resolve the default Matomo origin so admins never have to type it
+     * manually. Mirrors RebelRobTag::detectMatomoOrigin().
+     */
+    private function detectMatomoOrigin(): string
+    {
+        try {
+            $url = \Piwik\SettingsPiwik::getPiwikUrl();
+            if (!is_string($url) || $url === '') {
+                return '';
+            }
+            $parts = parse_url($url);
+            if (empty($parts['scheme']) || empty($parts['host'])) {
+                return '';
+            }
+            $origin = $parts['scheme'] . '://' . $parts['host'];
+            if (!empty($parts['port'])) {
+                $origin .= ':' . $parts['port'];
+            }
+            return $origin;
+        } catch (\Throwable $e) {
+            return '';
+        }
     }
 }

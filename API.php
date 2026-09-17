@@ -52,6 +52,18 @@ class API extends \Piwik\Plugin\API
         return $this->experiments->getById($id, $idSite);
     }
 
+    /**
+     * Unauthenticated lookup for the runtime tag script
+     * (Template/Tag/SimpleABTestingTag.web.js) — returns exactly the
+     * css/js/dates an admin already configured to be injected publicly into
+     * every visit that lands in the "variant" bucket, so exposing it here
+     * without a token_auth introduces no new disclosure.
+     */
+    public function getExperimentPublic(int $id, int $idSite): ?array
+    {
+        return $this->experiments->getById($id, $idSite);
+    }
+
     public function updateExperiment(int $id, int $idSite, string $name, string $hypothesis, string $description, string $fromDate, string $toDate, string $cssInsert, string $customJs): void
     {
         Piwik::checkUserHasSomeAdminAccess();

@@ -2,19 +2,70 @@
   return function (parameters, TagManager) {
       this.fire = function () {
           const experiment = parameters.get("experiment");
-          const parts = experiment.split(",");
-          const expId = parts[0];
-          const expName = parts[1];
-          const cookieName = "sabt_" + expName;
-          const start = parts[2] + "T00:00:00Z";
-          const stop = parts[3] + "T23:59:00Z";
-          const css = decodeURIComponent(parts[4].replace(/\+/g, "%20"));
-          const js = decodeURIComponent(parts[5].replace(/\+/g, "%20"));
+          const matomoOrigin = parameters.get("matomoOrigin");
+          const parts = String(experiment || "").split(",");
           const _paq = (window._paq = window._paq || []);
           const ORIGINAL = "1";
           const VARIANT = "2";
 
-          initExp(_paq, cookieName, start, stop, js, css, expId, expName);
+          if (!experiment) return;
+
+          if (parts.length >= 6) {
+              // Legacy format: "id,name,from,to,css,js," — the full
+              // snapshot baked in at selection time by an older version of
+              // this tag. Kept working as-is (no live fetch) so tags
+              // created before this change keep firing; re-select the
+              // experiment in this tag (or recreate it) to upgrade it to
+              // the live-fetch format below.
+              const expId = parts[0];
+              const expName = parts[1];
+              const start = parts[2] + "T00:00:00Z";
+              const stop = parts[3] + "T23:59:00Z";
+              const css = decodeURIComponent(parts[4].replace(/\+/g, "%20"));
+              const js = decodeURIComponent(parts[5].replace(/\+/g, "%20"));
+              initExp(_paq, "sabt_" + expName, start, stop, js, css, expId, expName);
+              return;
+          }
+
+          // Current format: "id,idSite" — a stable reference. The actual
+          // name/dates/css/js are fetched fresh on every page load, so
+          // editing the experiment takes effect immediately without
+          // republishing this tag.
+          const expId = parts[0];
+          const expSiteId = parts[1];
+          if (!expId || !expSiteId || !matomoOrigin) return;
+
+          fetchExperiment(matomoOrigin, expId, expSiteId, function (data) {
+              if (!data || !data.found) return;
+              const cookieName = "sabt_" + data.name;
+              const start = data.from_date + "T00:00:00Z";
+              const stop = data.to_date + "T23:59:00Z";
+              initExp(_paq, cookieName, start, stop, data.js_insert || "", data.css_insert || "", expId, data.name);
+          });
+
+          function fetchExperiment(origin, id, idSite, callback) {
+              var url = origin + "/index.php?module=SimpleABTesting&action=getExperimentPublic&format=json"
+                  + "&idSite=" + encodeURIComponent(idSite) + "&id=" + encodeURIComponent(id);
+              try {
+                  if (window.fetch) {
+                      fetch(url, { method: "GET", credentials: "omit" })
+                          .then(function (res) { return res.json(); })
+                          .then(callback)
+                          .catch(function () { /* silent — no experiment shown this load */ });
+                  } else {
+                      var xhr = new XMLHttpRequest();
+                      xhr.open("GET", url, true);
+                      xhr.onload = function () {
+                          if (xhr.status === 200) {
+                              try { callback(JSON.parse(xhr.responseText)); } catch (e) { /* ignore */ }
+                          }
+                      };
+                      xhr.send();
+                  }
+              } catch (e) {
+                  // ignore — no experiment shown this load
+              }
+          }
 
           function initExp(_paq, testName, testStartDate, testEndDate, scriptText, cssText, expId, expName) {
               let currentVariant = getCookie(testName);

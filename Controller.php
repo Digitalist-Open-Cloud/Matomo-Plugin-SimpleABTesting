@@ -21,9 +21,21 @@ class Controller extends \Piwik\Plugin\Controller
 {
     use Helpers;
 
+    /**
+     * Actions reachable by anonymous visitors on the tracked site — never
+     * gated behind admin access. Keep this list to read-only, already-public
+     * data (see getExperimentPublic()'s own docblock).
+     */
+    private const PUBLIC_ACTIONS = ['getExperimentPublic'];
+
     public function __construct()
     {
         parent::__construct();
+
+        $action = Common::getRequestVar('action', '', 'string');
+        if (in_array($action, self::PUBLIC_ACTIONS, true)) {
+            return;
+        }
 
         if (!Piwik::isUserHasSomeAdminAccess()) {
             echo "Not allowed!";
@@ -154,6 +166,46 @@ class Controller extends \Piwik\Plugin\Controller
             'nonce' => $nonce,
             'message' => $message,
         ]);
+    }
+
+    /**
+     * Public, unauthenticated JSON endpoint called at runtime by
+     * Template/Tag/SimpleABTestingTag.web.js. Returns the CURRENT
+     * name/dates/css/js for one experiment so an edit takes effect on the
+     * next page load without republishing the Tag Manager container.
+     *
+     * CORS-open (Access-Control-Allow-Origin: *): the tracked site's origin
+     * is not knowable in advance, and this returns exactly the content an
+     * admin already configured to be injected into that site's public
+     * pages — not a new disclosure, just a different delivery mechanism
+     * than baking it into the compiled container JS.
+     */
+    public function getExperimentPublic()
+    {
+        header('Access-Control-Allow-Origin: *');
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+
+        $idSite = Common::getRequestVar('idSite', 0, 'int');
+        $id = Common::getRequestVar('id', 0, 'int');
+
+        $api = new API();
+        $experiment = $api->getExperimentPublic($id, $idSite);
+
+        if (!$experiment) {
+            echo json_encode(['found' => false]);
+            exit();
+        }
+
+        echo json_encode([
+            'found' => true,
+            'name' => $experiment['name'],
+            'from_date' => $experiment['from_date'],
+            'to_date' => $experiment['to_date'],
+            'css_insert' => Common::unsanitizeInputValues($experiment['css_insert']),
+            'js_insert' => Common::unsanitizeInputValues($experiment['js_insert']),
+        ]);
+        exit();
     }
 
     /**
