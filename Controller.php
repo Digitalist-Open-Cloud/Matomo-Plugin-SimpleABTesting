@@ -39,7 +39,7 @@ class Controller extends \Piwik\Plugin\Controller
         $this->securityChecks();
 
         $name = trim(Request::fromRequest()->getStringParameter('name', 'string'));
-        $name = preg_replace('/[^a-zA-Z0-9]/', '', $name);
+        $name = preg_replace('/[^a-zA-Z0-9_-]/', '', $name);
         $hypothesis = trim(Request::fromRequest()->getStringParameter('hypothesis', 'string'));
         $description = trim(Request::fromRequest()->getStringParameter('description', 'string'));
         $fromDate = trim(Request::fromRequest()->getStringParameter('from_date', 'string'));
@@ -83,7 +83,7 @@ class Controller extends \Piwik\Plugin\Controller
         $id = trim(Request::fromRequest()->getIntegerParameter('id', 0));
         $idSite = trim(Request::fromRequest()->getIntegerParameter('idSite', 0));
         $name = trim(Request::fromRequest()->getStringParameter('name', 'string'));
-        $name = preg_replace('/[^a-zA-Z0-9]/', '', $name);
+        $name = preg_replace('/[^a-zA-Z0-9_-]/', '', $name);
         $hypothesis = trim(Request::fromRequest()->getStringParameter('hypothesis', 'string'));
         $description = trim(Request::fromRequest()->getStringParameter('description', 'string'));
         $fromDate = trim(Request::fromRequest()->getStringParameter('from_date', 'string'));

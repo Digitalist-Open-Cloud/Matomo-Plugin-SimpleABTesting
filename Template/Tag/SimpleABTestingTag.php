@@ -77,8 +77,9 @@ class SimpleABTestingTag extends BaseTag
 
     private function getExperiments()
     {
-        $sql = "SELECT id, name, from_date, to_date, css_insert, js_insert FROM " . Common::prefixTable('simple_ab_testing_experiments');
-        $result = Db::fetchAll($sql);
+        $idSite = Common::getRequestVar('idSite', 0, 'int');
+        $sql = "SELECT id, name, from_date, to_date, css_insert, js_insert FROM " . Common::prefixTable('simple_ab_testing_experiments') . " WHERE idsite = ?";
+        $result = Db::fetchAll($sql, [$idSite]);
 
         $options = [];
         foreach ($result as $experiment) {
