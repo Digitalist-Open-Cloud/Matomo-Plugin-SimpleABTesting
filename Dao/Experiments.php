@@ -87,6 +87,13 @@ class Experiments
         return $row ?: null;
     }
 
+    public function getIdByName(int $idSite, string $name): ?int
+    {
+        $query = "SELECT id FROM `" . Common::prefixTable('simple_ab_testing_experiments') . "` WHERE idsite = ? AND name = ?";
+        $id = Db::fetchOne($query, [$idSite, $name]);
+        return $id ? (int) $id : null;
+    }
+
     public function deleteExperiment(int $id): void
     {
         $query = "DELETE FROM `" . Common::prefixTable('simple_ab_testing_experiments') . "` WHERE id = ?";

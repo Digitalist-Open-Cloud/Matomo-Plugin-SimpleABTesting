@@ -25,7 +25,10 @@ class LogExperiment
         `idaction_name` INTEGER UNSIGNED NULL,
         `idgoal` INT DEFAULT NULL,
         `category` VARCHAR(255) NOT NULL DEFAULT '',
-        PRIMARY KEY (`idlog`)
+        `idexperiment` INT NULL,
+        `assignment_id` CHAR(32) NULL,
+        PRIMARY KEY (`idlog`),
+        KEY `idx_visit_time` (idvisit, server_time)
         )  DEFAULT CHARSET=utf8 ";
             Db::exec($sql);
         } catch (Exception $e) {
