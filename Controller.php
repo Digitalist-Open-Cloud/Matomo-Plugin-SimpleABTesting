@@ -13,6 +13,8 @@ use Piwik\Piwik;
 use Piwik\Common;
 use Piwik\Url;
 use Piwik\Plugins\SimpleABTesting\API;
+use Piwik\Plugins\SimpleABTesting\Dao\Experiments;
+use Piwik\Container\StaticContainer;
 use Piwik\Plugins\SimpleABTesting\Helpers;
 use Piwik\Request;
 use Piwik\ViewDataTable\Factory;
@@ -189,22 +191,19 @@ class Controller extends \Piwik\Plugin\Controller
         $idSite = Common::getRequestVar('idSite', 0, 'int');
         $id = Common::getRequestVar('id', 0, 'int');
 
-        $api = new API();
-        $experiment = $api->getExperimentPublic($id, $idSite);
+        // Anonymous by design: read the row directly (filters on id AND idsite)
+        // rather than through the access-checked API method.
+        $row = StaticContainer::get(Experiments::class)->getById($id, $idSite);
 
-        if (!$experiment) {
+        if (!$row) {
             echo json_encode(['found' => false]);
             exit();
         }
 
-        echo json_encode([
-            'found' => true,
-            'name' => $experiment['name'],
-            'from_date' => $experiment['from_date'],
-            'to_date' => $experiment['to_date'],
-            'css_insert' => Common::unsanitizeInputValues($experiment['css_insert']),
-            'js_insert' => Common::unsanitizeInputValues($experiment['js_insert']),
-        ]);
+        $experiment = API::publicFields($row);
+        $experiment['css_insert'] = Common::unsanitizeInputValues($experiment['css_insert']);
+        $experiment['js_insert'] = Common::unsanitizeInputValues($experiment['js_insert']);
+        echo json_encode($experiment);
         exit();
     }
 

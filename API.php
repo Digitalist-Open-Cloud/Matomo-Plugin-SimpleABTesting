@@ -61,13 +61,13 @@ class API extends \Piwik\Plugin\API
     {
         Piwik::checkUserHasViewAccess($idSite);
         $row = $this->experiments->getById($id, $idSite);
-        return $row ? $this->publicFields($row) : null;
+        return $row ? self::publicFields($row) : null;
     }
 
     /**
      * The single list of fields exposed to the tag.
      */
-    private function publicFields(array $row): array
+    public static function publicFields(array $row): array
     {
         return [
             'found' => true,
