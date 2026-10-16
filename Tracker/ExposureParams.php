@@ -42,4 +42,23 @@ class ExposureParams
             'assignment_id' => $assignmentId,
         ];
     }
+
+    /**
+     * Resolves the experiment id without trusting the request: a supplied id
+     * is kept only if it exists for the request's site, otherwise the
+     * (site-scoped) name lookup decides.
+     *
+     * @param callable(int): bool $existsForSite
+     * @param callable(string): ?int $idByName
+     */
+    public static function resolveExperimentId(?int $sabi, string $name, callable $existsForSite, callable $idByName): ?int
+    {
+        if ($sabi !== null && $existsForSite($sabi)) {
+            return $sabi;
+        }
+        if ($name !== 'Unknown') {
+            return $idByName($name);
+        }
+        return null;
+    }
 }

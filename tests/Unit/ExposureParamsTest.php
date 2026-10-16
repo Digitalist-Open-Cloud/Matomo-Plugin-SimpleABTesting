@@ -40,4 +40,20 @@ final class ExposureParamsTest extends TestCase
     {
         $this->assertNull(ExposureParams::fromRequestParams([]));
     }
+
+    public function testResolveKeepsSabiThatExistsForSite(): void
+    {
+        $this->assertSame(7, ExposureParams::resolveExperimentId(7, 'x', fn($id) => true, fn($n) => 99));
+    }
+
+    public function testResolveFallsBackToNameWhenSabiBelongsToOtherSite(): void
+    {
+        $this->assertSame(5, ExposureParams::resolveExperimentId(7, 'x', fn($id) => false, fn($n) => 5));
+    }
+
+    public function testResolveReturnsNullWhenBothUnknown(): void
+    {
+        $this->assertNull(ExposureParams::resolveExperimentId(7, 'x', fn($id) => false, fn($n) => null));
+        $this->assertNull(ExposureParams::resolveExperimentId(null, 'Unknown', fn($id) => true, fn($n) => 5));
+    }
 }

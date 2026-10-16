@@ -49,10 +49,13 @@ class RequestProcessor extends MatomoRequestProcessor
         }
 
         $idSite = (int) $request->getIdSite();
-        $idExperiment = $exposure['idexperiment'];
-        if ($idExperiment === null && $exposure['experiment_name'] !== 'Unknown') {
-            $idExperiment = (new Experiments())->getIdByName($idSite, $exposure['experiment_name']);
-        }
+        $experiments = new Experiments();
+        $idExperiment = ExposureParams::resolveExperimentId(
+            $exposure['idexperiment'],
+            $exposure['experiment_name'],
+            fn(int $id): bool => $experiments->getById($id, $idSite) !== null,
+            fn(string $name): ?int => $experiments->getIdByName($idSite, $name)
+        );
 
         $props = [
           'idsite' => $idSite,
