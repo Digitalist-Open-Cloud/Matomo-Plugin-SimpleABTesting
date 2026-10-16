@@ -1,51 +1,43 @@
 (function () {
-  function getCookieWithPrefix(prefix) {
-      // Get all cookies as a single string
-      const cookies = document.cookie;
-      // Split the cookies string into individual cookies
-      const cookieArray = cookies.split(';');
-      // Iterate through each cookie pair
-      for (let cookie of cookieArray) {
-          // Trim leading/trailing spaces from the cookie string
-          cookie = cookie.trim();
-          // Check if the cookie starts with the given prefix
-          if (cookie.startsWith(prefix)) {
-              // Extract the cookie value
-              const value = cookie.substring(cookie.indexOf('=') + 1);
-              // Extract the name after the prefix, e.g. `sabt_test` -> `test`
-              const experimentName = cookie.substring(prefix.length, cookie.indexOf('='));
-              // Return both the experimentName and the cookie value
-              return {
-                  value: value,
-                  experimentName: experimentName,
-              };
+  var KEY_PREFIX = 'sabt:';
+
+  // Reads the visitor's active A/B assignment from localStorage (written by
+  // the SimpleABTesting tag). Returns null when there is none, or when
+  // localStorage is unavailable.
+  function getActiveAssignment() {
+      try {
+          var today = new Date().toISOString().slice(0, 10);
+          for (var i = 0; i < window.localStorage.length; i++) {
+              var key = window.localStorage.key(i);
+              if (!key || key.indexOf(KEY_PREFIX) !== 0) {
+                  continue;
+              }
+              var rec;
+              try {
+                  rec = JSON.parse(window.localStorage.getItem(key));
+              } catch (e) {
+                  continue;
+              }
+              if (rec && (rec.v === '1' || rec.v === '2')
+                  && /^[0-9a-f]{32}$/.test(String(rec.a))
+                  && typeof rec.exp === 'string' && rec.exp >= today) {
+                  return { v: rec.v, id: key.substring(KEY_PREFIX.length), a: rec.a };
+              }
           }
+      } catch (e) {
+          // localStorage blocked
       }
-      // Return null if no cookie with the prefix is found
       return null;
   }
 
   function init() {
-      const sabtCookie = getCookieWithPrefix('sabt_');
       Matomo.addPlugin('SimpleABTesting', {
           log: function () {
-              // If no cookie with the prefix is found, return nothing
-              if (!sabtCookie) {
+              var assignment = getActiveAssignment();
+              if (!assignment) {
                   return '';
               }
-              // Extract the cookie's value and the portion of the name after "sabt_"
-              const { value, experimentName } = sabtCookie;
-              // Build the tracking parameter based on the value
-              // 1 = original
-              if (value === '1') {
-                  return `&sabt=1&experiment=${experimentName}`;
-              }
-              // 2 = variant
-              if (value === '2') {
-                  return `&sabt=2&experiment=${experimentName}`;
-              }
-              // Return nothing if the cookie has other unexpected values
-              return '';
+              return '&sabt=' + assignment.v + '&sabi=' + encodeURIComponent(assignment.id) + '&saba=' + assignment.a;
           },
       });
   }
