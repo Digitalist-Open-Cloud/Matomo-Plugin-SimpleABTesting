@@ -36,37 +36,52 @@ class API extends \Piwik\Plugin\API
      */
     public function insertExperiment(int $idSite, string $name, string $hypothesis, string $description, string $fromDate, string $toDate, string $cssInsert, string $customJs): void
     {
-        Piwik::checkUserHasSomeAdminAccess();
+        Piwik::checkUserHasAdminAccess($idSite);
         $this->experiments->insertExperiment($idSite, $name, $hypothesis, $description, $fromDate, $toDate, $cssInsert, $customJs);
     }
 
-    public function deleteExperiment(int $id): void
+    public function deleteExperiment(int $id, int $idSite): void
     {
-        Piwik::checkUserHasSomeAdminAccess();
-        $this->experiments->deleteExperiment($id);
+        Piwik::checkUserHasAdminAccess($idSite);
+        $this->experiments->deleteExperiment($id, $idSite);
     }
 
     public function getExperiment(int $id, int $idSite): ?array
     {
-        Piwik::checkUserHasSomeAdminAccess();
+        Piwik::checkUserHasAdminAccess($idSite);
         return $this->experiments->getById($id, $idSite);
     }
 
     /**
-     * Unauthenticated lookup for the runtime tag script
-     * (Template/Tag/SimpleABTestingTag.web.js) — returns exactly the
-     * css/js/dates an admin already configured to be injected publicly into
-     * every visit that lands in the "variant" bucket, so exposing it here
-     * without a token_auth introduces no new disclosure.
+     * Lookup for the runtime tag script (via Controller::getExperimentPublic).
+     * Requires view access to the site and returns only the fields the tag
+     * needs; hypothesis and description never leave through here.
      */
     public function getExperimentPublic(int $id, int $idSite): ?array
     {
-        return $this->experiments->getById($id, $idSite);
+        Piwik::checkUserHasViewAccess($idSite);
+        $row = $this->experiments->getById($id, $idSite);
+        return $row ? self::publicFields($row) : null;
+    }
+
+    /**
+     * The single list of fields exposed to the tag.
+     */
+    public static function publicFields(array $row): array
+    {
+        return [
+            'found' => true,
+            'name' => $row['name'],
+            'from_date' => $row['from_date'],
+            'to_date' => $row['to_date'],
+            'css_insert' => $row['css_insert'],
+            'js_insert' => $row['js_insert'],
+        ];
     }
 
     public function updateExperiment(int $id, int $idSite, string $name, string $hypothesis, string $description, string $fromDate, string $toDate, string $cssInsert, string $customJs): void
     {
-        Piwik::checkUserHasSomeAdminAccess();
+        Piwik::checkUserHasAdminAccess($idSite);
         $this->experiments->updateExperiment($id, $idSite, $name, $hypothesis, $description, $fromDate, $toDate, $cssInsert, $customJs);
     }
 

@@ -37,6 +37,7 @@
                             <input type="hidden" name="nonce" value="{{ nonce }}" >
                             <input type="hidden" name="redirect_url" value="{{ currentUrl }}&message=Deleted%20experiment%20{{ experiment.name }}">
                             <input type="hidden" name="id" value="{{ experiment.id }}">
+                            <input type="hidden" name="idSite" value="{{ experiment.idsite }}">
                             <button type="submit" class="btn btn-delete">Delete</button>
                         </form>
                     </td>

@@ -7,6 +7,7 @@
           const _paq = (window._paq = window._paq || []);
           const ORIGINAL = "1";
           const VARIANT = "2";
+          const KEY_PREFIX = "sabt:";
 
           if (!experiment) return;
 
@@ -23,7 +24,7 @@
               const stop = parts[3] + "T23:59:00Z";
               const css = decodeURIComponent(parts[4].replace(/\+/g, "%20"));
               const js = decodeURIComponent(parts[5].replace(/\+/g, "%20"));
-              initExp(_paq, "sabt_" + expName, start, stop, js, css, expId, expName);
+              initExp(_paq, start, stop, parts[3], js, css, expId, expName);
               return;
           }
 
@@ -37,10 +38,9 @@
 
           fetchExperiment(matomoOrigin, expId, expSiteId, function (data) {
               if (!data || !data.found) return;
-              const cookieName = "sabt_" + data.name;
               const start = data.from_date + "T00:00:00Z";
               const stop = data.to_date + "T23:59:00Z";
-              initExp(_paq, cookieName, start, stop, data.js_insert || "", data.css_insert || "", expId, data.name);
+              initExp(_paq, start, stop, data.to_date, data.js_insert || "", data.css_insert || "", expId, data.name);
           });
 
           function fetchExperiment(origin, id, idSite, callback) {
@@ -67,22 +67,67 @@
               }
           }
 
-          function initExp(_paq, testName, testStartDate, testEndDate, scriptText, cssText, expId, expName) {
-              let currentVariant = getCookie(testName);
+          function randomHex32() {
+              var bytes = crypto.getRandomValues(new Uint8Array(16));
+              var out = "";
+              for (var i = 0; i < bytes.length; i++) {
+                  out += (bytes[i] < 16 ? "0" : "") + bytes[i].toString(16);
+              }
+              return out;
+          }
+
+          // Remove the assignments of every other experiment. One test runs
+          // per site, so another sabt:* entry is stale (e.g. a concluded test
+          // whose stored exp still lies in the future) and must not keep
+          // riding along on this visitor's requests via tracker.js.
+          // Best effort: failures here never block the experiment.
+          function removeOtherAssignments(exceptKey) {
+              try {
+                  var others = [];
+                  for (var i = 0; i < localStorage.length; i++) {
+                      var k = localStorage.key(i);
+                      if (k && k.indexOf(KEY_PREFIX) === 0 && k !== exceptKey) others.push(k);
+                  }
+                  for (var j = 0; j < others.length; j++) localStorage.removeItem(others[j]);
+              } catch (e) { /* ignore */ }
+          }
+
+          // Returns {v, a} for this experiment, creating and persisting a
+          // new assignment when needed. Returns null when localStorage is
+          // unavailable, so the visitor is neither assigned nor counted.
+          function getAssignment(expId, toDate) {
+              var key = KEY_PREFIX + expId;
+              try {
+                  var rec = null;
+                  var raw = localStorage.getItem(key); // throws when blocked
+                  try {
+                      rec = JSON.parse(raw);
+                  } catch (e) { rec = null; }
+                  if (!(rec && (rec.v === ORIGINAL || rec.v === VARIANT) && /^[0-9a-f]{32}$/.test(String(rec.a)))) {
+                      rec = { v: Math.random() < 0.5 ? ORIGINAL : VARIANT, a: randomHex32() };
+                  }
+                  localStorage.setItem(key, JSON.stringify({ v: rec.v, a: rec.a, exp: toDate }));
+                  removeOtherAssignments(key);
+                  return { v: rec.v, a: rec.a };
+              } catch (e) {
+                  return null;
+              }
+          }
+
+          function initExp(_paq, testStartDate, testEndDate, toDate, scriptText, cssText, expId, expName) {
               const currentDate = new Date();
               const startDate = new Date(testStartDate);
               const endDate = new Date(testEndDate);
 
               if (currentDate >= startDate && currentDate <= endDate) {
-                  if (!currentVariant) {
-                      // Randomly assign original or variant.
-                      currentVariant = Math.random() < 0.5 ? ORIGINAL : VARIANT;
-                      setCookie(testName, currentVariant, testEndDate);
-                  }
-                  // Send tracking parameters to Matomo
-                  _paq.push(['appendToTrackingUrl', 'sabt=' + currentVariant + '&sabi=' + expId + '&sabn=' + encodeURIComponent(expName)]);
+                  const assignment = getAssignment(expId, toDate);
+                  // No usable localStorage: show the original, send nothing.
+                  if (!assignment) return;
 
-                  if (currentVariant === VARIANT) {
+                  // Send tracking parameters to Matomo
+                  _paq.push(['appendToTrackingUrl', 'sabt=' + assignment.v + '&sabi=' + expId + '&sabn=' + encodeURIComponent(expName) + '&saba=' + assignment.a]);
+
+                  if (assignment.v === VARIANT) {
                       try {
                           insertCSS(cssText);
                           insertJS(scriptText);
@@ -90,6 +135,9 @@
                           console.error("Error in script execution", e);
                       }
                   }
+
+                  // Exposure ping, for both variants, after the parameters are set.
+                  _paq.push(['ping']);
               }
           }
 
@@ -111,25 +159,6 @@
               script.type = "text/javascript";
               script.text = scriptText;
               document.head.appendChild(script);
-          }
-
-          /**
-           * Function to set a cookie
-           */
-          function setCookie(name, value, expires) {
-              const date = new Date(expires);
-              const cookie = name + "=" + encodeURIComponent(value) + ";expires=" + date.toUTCString() + ";path=/";
-              document.cookie = cookie;
-          }
-
-          /**
-           * Function to get a cookie by name
-           */
-          function getCookie(name) {
-              const escapeRegExp = (string) => string.replace(/[.*+\-?^${}()|[\]\\]/g, "\\$&");
-              const safeName = escapeRegExp(name);
-              const match = document.cookie.match(new RegExp("(^| )" + safeName + "=([^;]+)"));
-              return match ? decodeURIComponent(match[2]) : null;
           }
       };
   };

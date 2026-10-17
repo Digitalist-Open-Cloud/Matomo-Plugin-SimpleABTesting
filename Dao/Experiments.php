@@ -65,10 +65,12 @@ class Experiments
     {
         $this->assertValidAndNotOverlapping($idSite, $name, $fromDate, $toDate, $id);
 
+        // Scoped to the row's own site, and idsite is never changed: a row
+        // cannot be edited from, or moved to, another site.
         $query = "UPDATE `" . Common::prefixTable('simple_ab_testing_experiments') . "` SET " .
-            "idsite = ?, name = ?, hypothesis = ?, description = ?, from_date = ?, to_date = ?, css_insert = ?, js_insert = ? " .
-            "WHERE id = ?";
-        $params = [$idSite, $name, $hypothesis, $description, $fromDate, $toDate, $cssInsert, $customJs, $id];
+            "name = ?, hypothesis = ?, description = ?, from_date = ?, to_date = ?, css_insert = ?, js_insert = ? " .
+            "WHERE id = ? AND idsite = ?";
+        $params = [$name, $hypothesis, $description, $fromDate, $toDate, $cssInsert, $customJs, $id, $idSite];
         try {
             $db = $this->getDb();
             $db->query($query, $params);
@@ -87,10 +89,17 @@ class Experiments
         return $row ?: null;
     }
 
-    public function deleteExperiment(int $id): void
+    public function getIdByName(int $idSite, string $name): ?int
     {
-        $query = "DELETE FROM `" . Common::prefixTable('simple_ab_testing_experiments') . "` WHERE id = ?";
-        $params = [$id];
+        $query = "SELECT id FROM `" . Common::prefixTable('simple_ab_testing_experiments') . "` WHERE idsite = ? AND name = ?";
+        $id = Db::fetchOne($query, [$idSite, $name]);
+        return $id ? (int) $id : null;
+    }
+
+    public function deleteExperiment(int $id, int $idSite): void
+    {
+        $query = "DELETE FROM `" . Common::prefixTable('simple_ab_testing_experiments') . "` WHERE id = ? AND idsite = ?";
+        $params = [$id, $idSite];
         try {
             $db = $this->getDb();
             $db->query($query, $params);

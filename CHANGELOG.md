@@ -1,5 +1,54 @@
 # Changelog
 
+## [0.1.98] - 2026-10-17
+
+### Added
+
+- Assignment is stored in `localStorage` under `sabt:<idexperiment>` as JSON
+  with the variant `v`, an assignment id `a` (32 hex characters) and an expiry
+  `exp`, replacing the `sabt_<name>` cookie.
+- The tag sends the assignment id `saba` together with `sabt`, `sabi` and
+  `sabn`, and sends an exposure `ping` after the variant has been applied, for
+  both variants. Exposure is therefore recorded with a timestamp even on
+  single-pageview visits.
+- `tracker.js` reads the assignment from `localStorage` and sends `sabt`,
+  `sabi` and `saba` on every request type the Matomo tracker sends through a
+  plugin hook (pageviews, links, goals, events, site search, ecommerce, pings
+  and content tracking) while an assignment is active.
+- `simple_ab_testing_log` gets the columns `idexperiment` and `assignment_id`
+  and the index `idx_visit_time (idvisit, server_time)`, added by
+  `Updates/0.1.98.php`. A request-supplied `sabi` is verified against the
+  request's site and otherwise resolved by experiment name; malformed `saba`,
+  `sabi` and `sabt` values are stored as NULL or ignored.
+
+### Changed
+
+- **Upgrade note:** when `localStorage` is unavailable, the original is shown
+  and the visitor is not part of the test.
+- Only one assignment is kept per site: when the tag applies an experiment it
+  removes every other `sabt:*` entry, so a concluded test's assignment stops
+  riding along on the visitor's requests.
+
+### Fixed
+
+- Requests whose UTC day lies outside the experiment's `from_date`–`to_date`
+  (for example a returning visitor after the test was concluded and its
+  `to_date` moved back) are logged with `idexperiment` NULL, so they no longer
+  count for the concluded test.
+
+### Security
+
+- Experiment rows are scoped to their site: `insertExperiment`,
+  `updateExperiment`, `getExperiment` and `deleteExperiment` require admin
+  access to the given site (not just to some site); `deleteExperiment` now
+  takes `idSite` (`deleteExperiment(int $id, int $idSite)`); updates and
+  deletes filter on `id` and `idsite`, and an update never changes a row's
+  `idsite`. The Controller's write actions check admin access to the site
+  before acting.
+- `API::getExperimentPublic` now requires view access to the site and returns
+  only the public tag fields. The tag endpoint in the Controller reads the row
+  directly by id and idsite.
+
 ## [0.1.96] - 2026-09-16
 
 ### Added
