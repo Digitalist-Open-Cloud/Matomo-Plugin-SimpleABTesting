@@ -36,19 +36,19 @@ class API extends \Piwik\Plugin\API
      */
     public function insertExperiment(int $idSite, string $name, string $hypothesis, string $description, string $fromDate, string $toDate, string $cssInsert, string $customJs): void
     {
-        Piwik::checkUserHasSomeAdminAccess();
+        Piwik::checkUserHasAdminAccess($idSite);
         $this->experiments->insertExperiment($idSite, $name, $hypothesis, $description, $fromDate, $toDate, $cssInsert, $customJs);
     }
 
-    public function deleteExperiment(int $id): void
+    public function deleteExperiment(int $id, int $idSite): void
     {
-        Piwik::checkUserHasSomeAdminAccess();
-        $this->experiments->deleteExperiment($id);
+        Piwik::checkUserHasAdminAccess($idSite);
+        $this->experiments->deleteExperiment($id, $idSite);
     }
 
     public function getExperiment(int $id, int $idSite): ?array
     {
-        Piwik::checkUserHasSomeAdminAccess();
+        Piwik::checkUserHasAdminAccess($idSite);
         return $this->experiments->getById($id, $idSite);
     }
 
@@ -81,7 +81,7 @@ class API extends \Piwik\Plugin\API
 
     public function updateExperiment(int $id, int $idSite, string $name, string $hypothesis, string $description, string $fromDate, string $toDate, string $cssInsert, string $customJs): void
     {
-        Piwik::checkUserHasSomeAdminAccess();
+        Piwik::checkUserHasAdminAccess($idSite);
         $this->experiments->updateExperiment($id, $idSite, $name, $hypothesis, $description, $fromDate, $toDate, $cssInsert, $customJs);
     }
 

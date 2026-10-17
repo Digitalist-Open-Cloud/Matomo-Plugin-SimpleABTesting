@@ -50,7 +50,8 @@ class Controller extends \Piwik\Plugin\Controller
      */
     public function addExperiment()
     {
-        $this->securityChecks();
+        $idSite = Request::fromRequest()->getIntegerParameter('idSite', 0);
+        $this->securityChecks($idSite);
 
         $name = trim(Request::fromRequest()->getStringParameter('name', 'string'));
         $name = preg_replace('/[^a-zA-Z0-9_-]/', '', $name);
@@ -60,7 +61,6 @@ class Controller extends \Piwik\Plugin\Controller
         $toDate = trim(Request::fromRequest()->getStringParameter('to_date', 'string'));
         $cssInsert = trim(Request::fromRequest()->getStringParameter('css_insert', 'string'));
         $customJs = trim(Request::fromRequest()->getStringParameter('js_insert', 'string'));
-        $idSite = trim(Request::fromRequest()->getIntegerParameter('idSite', 0));
         $redirectUrl = $_POST['redirect_url'] . "&message=Experiment%20Created";
 
         $api = new API();
@@ -92,10 +92,10 @@ class Controller extends \Piwik\Plugin\Controller
      */
     public function updateExperiment()
     {
-        $this->securityChecks();
+        $idSite = Request::fromRequest()->getIntegerParameter('idSite', 0);
+        $this->securityChecks($idSite);
 
         $id = trim(Request::fromRequest()->getIntegerParameter('id', 0));
-        $idSite = trim(Request::fromRequest()->getIntegerParameter('idSite', 0));
         $name = trim(Request::fromRequest()->getStringParameter('name', 'string'));
         $name = preg_replace('/[^a-zA-Z0-9_-]/', '', $name);
         $hypothesis = trim(Request::fromRequest()->getStringParameter('hypothesis', 'string'));
@@ -134,9 +134,8 @@ class Controller extends \Piwik\Plugin\Controller
      */
     public function editExperimentForm()
     {
-        Piwik::checkUserHasSomeAdminAccess();
-
         $idSite = Common::getRequestVar('idSite', 0, 'int');
+        Piwik::checkUserHasAdminAccess($idSite);
         $id = Common::getRequestVar('id', 0, 'int');
         $period = Common::getRequestVar('period', 'day', 'string');
         $date = Common::getRequestVar('date', 'today', 'string');
@@ -212,18 +211,25 @@ class Controller extends \Piwik\Plugin\Controller
      */
     public function delete()
     {
-        $this->securityChecks();
+        $idSite = Request::fromRequest()->getIntegerParameter('idSite', 0);
+        $this->securityChecks($idSite);
 
         $redirectUrl = $_POST['redirect_url'];
         $id = trim(Request::fromRequest()->getIntegerParameter('id', 0));
 
         $api = new API();
-        $api->deleteExperiment($id);
+        $api->deleteExperiment($id, $idSite);
         Url::redirectToUrl($redirectUrl);
     }
 
-    private function securityChecks()
+    /**
+     * Write actions: POST with a valid nonce, and admin access to the site the
+     * experiment belongs to (not just to some site).
+     */
+    private function securityChecks(int $idSite)
     {
+        Piwik::checkUserHasAdminAccess($idSite);
+
         $nonce = Common::getRequestVar('nonce', false);
         //$nonce = trim(Request::fromRequest()->getStringParameter('nonce', 'string'));
 
