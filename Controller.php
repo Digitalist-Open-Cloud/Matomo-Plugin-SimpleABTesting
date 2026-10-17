@@ -21,9 +21,21 @@ class Controller extends \Piwik\Plugin\Controller
 {
     use Helpers;
 
+    /**
+     * Actions reachable by anonymous visitors on the tracked site — never
+     * gated behind admin access. Keep this list to read-only, already-public
+     * data (see getExperimentPublic()'s own docblock).
+     */
+    private const PUBLIC_ACTIONS = ['getExperimentPublic'];
+
     public function __construct()
     {
         parent::__construct();
+
+        $action = Common::getRequestVar('action', '', 'string');
+        if (in_array($action, self::PUBLIC_ACTIONS, true)) {
+            return;
+        }
 
         if (!Piwik::isUserHasSomeAdminAccess()) {
             echo "Not allowed!";
@@ -39,7 +51,7 @@ class Controller extends \Piwik\Plugin\Controller
         $this->securityChecks();
 
         $name = trim(Request::fromRequest()->getStringParameter('name', 'string'));
-        $name = preg_replace('/[^a-zA-Z0-9]/', '', $name);
+        $name = preg_replace('/[^a-zA-Z0-9_-]/', '', $name);
         $hypothesis = trim(Request::fromRequest()->getStringParameter('hypothesis', 'string'));
         $description = trim(Request::fromRequest()->getStringParameter('description', 'string'));
         $fromDate = trim(Request::fromRequest()->getStringParameter('from_date', 'string'));
@@ -71,6 +83,129 @@ class Controller extends \Piwik\Plugin\Controller
             $errorRedirectUrl = $_POST['redirect_url'] . "&message=" . urlencode($e->getMessage());
             Url::redirectToUrl($errorRedirectUrl);
         }
+    }
+
+    /**
+     * Update an experiment (edit).
+     */
+    public function updateExperiment()
+    {
+        $this->securityChecks();
+
+        $id = trim(Request::fromRequest()->getIntegerParameter('id', 0));
+        $idSite = trim(Request::fromRequest()->getIntegerParameter('idSite', 0));
+        $name = trim(Request::fromRequest()->getStringParameter('name', 'string'));
+        $name = preg_replace('/[^a-zA-Z0-9_-]/', '', $name);
+        $hypothesis = trim(Request::fromRequest()->getStringParameter('hypothesis', 'string'));
+        $description = trim(Request::fromRequest()->getStringParameter('description', 'string'));
+        $fromDate = trim(Request::fromRequest()->getStringParameter('from_date', 'string'));
+        $toDate = trim(Request::fromRequest()->getStringParameter('to_date', 'string'));
+        $cssInsert = trim(Request::fromRequest()->getStringParameter('css_insert', 'string'));
+        $customJs = trim(Request::fromRequest()->getStringParameter('js_insert', 'string'));
+        $redirectUrl = $_POST['redirect_url'];
+
+        $api = new API();
+        try {
+            $api->updateExperiment(
+                $id,
+                $idSite,
+                $name,
+                $hypothesis,
+                $description,
+                $fromDate,
+                $toDate,
+                $cssInsert,
+                $customJs
+            );
+            Url::redirectToUrl($redirectUrl . "&message=Experiment%20Updated");
+        } catch (\Exception $e) {
+            $errorRedirectUrl = $redirectUrl . "&message=" . urlencode($e->getMessage());
+            Url::redirectToUrl($errorRedirectUrl);
+        }
+    }
+
+    /**
+     * Renders a dedicated full page for editing a single experiment.
+     * Reached via a plain link (not a modal) from the Edit action in
+     * experiments.twig; submits back to updateExperiment() above, same
+     * pattern as Goals' "Manage Goals" admin page.
+     */
+    public function editExperimentForm()
+    {
+        Piwik::checkUserHasSomeAdminAccess();
+
+        $idSite = Common::getRequestVar('idSite', 0, 'int');
+        $id = Common::getRequestVar('id', 0, 'int');
+        $period = Common::getRequestVar('period', 'day', 'string');
+        $date = Common::getRequestVar('date', 'today', 'string');
+
+        $backUrl = $this->getCustomUrl($period, $date, 'SimpleABTesting_SimpleABTesting', 'SimpleABTesting_ExistingExperiments');
+
+        $api = new API();
+        $experiment = $api->getExperiment($id, $idSite);
+
+        if ($experiment) {
+            $experiment['css_insert'] = Common::unsanitizeInputValues($experiment['css_insert']);
+            $experiment['js_insert'] = Common::unsanitizeInputValues($experiment['js_insert']);
+        }
+
+        $updateUrl = Url::getCurrentQueryStringWithParametersModified([
+            'module' => 'SimpleABTesting',
+            'action' => 'updateExperiment',
+        ]);
+
+        $nonce = \Piwik\Nonce::getNonce('SimpleABTesting.index');
+        $message = trim(Request::fromRequest()->getStringParameter('message', ''));
+
+        return $this->renderTemplate('edit', [
+            'experiment' => $experiment,
+            'idSite' => $idSite,
+            'updateUrl' => $updateUrl,
+            'redirectUrl' => $backUrl,
+            'backUrl' => $backUrl,
+            'nonce' => $nonce,
+            'message' => $message,
+        ]);
+    }
+
+    /**
+     * Public, unauthenticated JSON endpoint called at runtime by
+     * Template/Tag/SimpleABTestingTag.web.js. Returns the CURRENT
+     * name/dates/css/js for one experiment so an edit takes effect on the
+     * next page load without republishing the Tag Manager container.
+     *
+     * CORS-open (Access-Control-Allow-Origin: *): the tracked site's origin
+     * is not knowable in advance, and this returns exactly the content an
+     * admin already configured to be injected into that site's public
+     * pages — not a new disclosure, just a different delivery mechanism
+     * than baking it into the compiled container JS.
+     */
+    public function getExperimentPublic()
+    {
+        header('Access-Control-Allow-Origin: *');
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+
+        $idSite = Common::getRequestVar('idSite', 0, 'int');
+        $id = Common::getRequestVar('id', 0, 'int');
+
+        $api = new API();
+        $experiment = $api->getExperimentPublic($id, $idSite);
+
+        if (!$experiment) {
+            echo json_encode(['found' => false]);
+            exit();
+        }
+
+        echo json_encode([
+            'found' => true,
+            'name' => $experiment['name'],
+            'from_date' => $experiment['from_date'],
+            'to_date' => $experiment['to_date'],
+            'css_insert' => Common::unsanitizeInputValues($experiment['css_insert']),
+            'js_insert' => Common::unsanitizeInputValues($experiment['js_insert']),
+        ]);
+        exit();
     }
 
     /**
@@ -114,7 +249,17 @@ class Controller extends \Piwik\Plugin\Controller
         // into week/month totals (see Archiver::recordNamesForMultiPeriod),
         // so this report — which spans arbitrary periods — no longer claims
         // to show it. Keep this in sync with GetExperimentReport::configureView().
-        $view = Factory::build('table', 'SimpleABTesting.getExperimentData');
+        //
+        // The third Factory::build() argument pins this view's own
+        // self_url/reload target ("controllerAction") to getExperimentReport.
+        // Without it, ViewDataTable::__construct() defaults controllerAction
+        // to the api action ('getExperimentData'), so every interactive
+        // reload of THIS top-level table (sort, page, flatten toggle) would
+        // re-render via getExperimentData() below instead — which sets its
+        // own "Variant" column translation, wrong at this level. Subtable
+        // expand still correctly routes to getExperimentData(): see
+        // Reports/GetExperimentData.php's actionToLoadSubTables.
+        $view = Factory::build('table', 'SimpleABTesting.getExperimentData', 'SimpleABTesting.getExperimentReport');
         $view->config->columns_to_display = ['label', 'nb_visits'];
         $view->config->addTranslation('label', Piwik::translate('SimpleABTesting_ExperimentName'));
         $view->config->addTranslation('nb_visits', Piwik::translate('SimpleABTesting_NbVisits'));

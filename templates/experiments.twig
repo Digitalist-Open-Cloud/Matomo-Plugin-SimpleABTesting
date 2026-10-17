@@ -1,4 +1,5 @@
 {% block content %}
+<div class="simpleABTestingPlugin">
 <h1>Simple A/B Testing</h1>
 {% if message is not empty %}
 <div class="alert">
@@ -10,7 +11,8 @@
     <div class="card-content">
         <h2>Existing Experiments</h2>
         {% if experiments is not empty %}
-        <table>
+        <div class="table-scroll">
+        <table class="simpleABTestingTable">
             <thead>
                 <tr>
                     <th>Name</th>
@@ -18,7 +20,7 @@
                     <th>To Date</th>
                     <th>Inserted CSS</th>
                     <th>Inserted JS</th>
-                    <th>Delete</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -27,25 +29,28 @@
                     <td>{{ experiment.name }}</td>
                     <td>{{ experiment.from_date }}</td>
                     <td>{{ experiment.to_date }}</td>
-                    <td>{{ experiment.css_insert }}</td>
-                    <td>{{ experiment.js_insert }}</td>
-                    <td>
+                    <td class="code-cell"><span title="{{ experiment.css_insert }}">{{ experiment.css_insert }}</span></td>
+                    <td class="code-cell"><span title="{{ experiment.js_insert }}">{{ experiment.js_insert }}</span></td>
+                    <td class="actions-cell">
+                        <a class="btn" href="{{ editUrl }}&id={{ experiment.id }}">Edit</a>
                         <form method="post" action="{{ deleteUrl }}">
                             <input type="hidden" name="nonce" value="{{ nonce }}" >
                             <input type="hidden" name="redirect_url" value="{{ currentUrl }}&message=Deleted%20experiment%20{{ experiment.name }}">
                             <input type="hidden" name="id" value="{{ experiment.id }}">
-                            <button type="submit" class="btn btn-danger">Delete</button>
+                            <button type="submit" class="btn btn-delete">Delete</button>
                         </form>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+        </div>
         {% else %}
         <div class="alert">
             No existing experiments for this site.
         </div>
         {% endif %}
     </div>
+</div>
 </div>
 {% endblock %}

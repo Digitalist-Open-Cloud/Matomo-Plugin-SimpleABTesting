@@ -5,6 +5,7 @@
         "SimpleABTestingTagDescription": "Adds a tag for a Simple A\/B Testing experiment",
         "TagChooseExperiment": "Choose experiment",
         "ExistingExperiments": "Existing Experiments",
+        "EditExperiment": "Edit Experiment",
         "CreateNewExperiment": "Create a new experiment",
         "InsertExperiment": "Insert experiment",
         "Tests": "Tests",
@@ -21,6 +22,10 @@
         "NbUniqueVisitors": "Number of unique visitors",
         "ExperimentsReport": "Experiments Report",
         "Variant": "Variant",
-        "ReportHelpText": "Here you can see the reports for your experiments, and when the reports was last archived - reports needs to be archived to show up."
+        "ReportHelpText": "Here you can see the reports for your experiments, and when the reports was last archived - reports needs to be archived to show up.",
+        "GoalsReport": "Experiment Goals",
+        "NbVisitsConverted": "Visits converted",
+        "NbConversions": "Conversions",
+        "GoalsReportHelpText": "Goal conversions broken down by experiment, then variant, then goal. Expand an experiment to see its variants; expand a variant to see its goals."
     }
 }
