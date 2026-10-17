@@ -61,4 +61,22 @@ class ExposureParams
         }
         return null;
     }
+
+    /**
+     * Whether a request at $timestamp falls inside the experiment row's
+     * schedule [from_date, to_date], compared as UTC days (the tag uses UTC
+     * too). A concluded test has its to_date moved back, but a returning
+     * visitor's stored assignment keeps sending the old id until it expires
+     * in the browser; such requests must not count for the test.
+     *
+     * @param array{from_date: string, to_date: string}|null $row
+     */
+    public static function isWithinSchedule(int $timestamp, ?array $row): bool
+    {
+        if ($row === null) {
+            return false;
+        }
+        $day = gmdate('Y-m-d', $timestamp);
+        return $day >= (string) $row['from_date'] && $day <= (string) $row['to_date'];
+    }
 }
