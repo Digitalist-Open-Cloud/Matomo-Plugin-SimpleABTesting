@@ -28,3 +28,12 @@ Deno.test("registreras via matomoPluginAsyncInit och läser aldrig cookie", () =
   assertEquals(loadTracker(env, { matomoReady: false }).log(), `&sabt=1&sabi=7&saba=${A}`);
   assertEquals(env.cookieWrites, []);
 });
+
+Deno.test("alla request-typer bär tilldelningen, inte bara sidvisningar", () => {
+  const ls = makeStorage({ "sabt:7": JSON.stringify({ v: "2", a: A, exp: today(1) }) });
+  const { plugin } = loadTracker(makeEnv({ localStorage: ls }));
+  for (const hook of ["log", "link", "goal", "event", "sitesearch", "ecommerce", "ping", "contentImpression", "contentInteraction"]) {
+    assertEquals(typeof plugin[hook], "function", hook);
+    assertEquals(plugin[hook](), `&sabt=2&sabi=7&saba=${A}`, hook);
+  }
+});

@@ -77,5 +77,5 @@ export function loadTracker(env, { matomoReady = true } = {}) {
   new Function("window", "document", "localStorage", "Matomo", src)(
     env.window, env.document, env.localStorage, Matomo);
   if (!matomoReady) asyncInit.forEach((f) => f());
-  return { log: () => plugin.log() };
+  return { log: () => plugin.log(), plugin };
 }

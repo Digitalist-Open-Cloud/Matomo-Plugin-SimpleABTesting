@@ -67,10 +67,6 @@
               }
           }
 
-          function todayUtc() {
-              return new Date().toISOString().slice(0, 10);
-          }
-
           function randomHex32() {
               var bytes = crypto.getRandomValues(new Uint8Array(16));
               var out = "";
@@ -80,21 +76,19 @@
               return out;
           }
 
-          // Remove assignments of other experiments that have expired.
+          // Remove the assignments of every other experiment. One test runs
+          // per site, so another sabt:* entry is stale (e.g. a concluded test
+          // whose stored exp still lies in the future) and must not keep
+          // riding along on this visitor's requests via tracker.js.
           // Best effort: failures here never block the experiment.
-          function cleanExpired(exceptKey) {
+          function removeOtherAssignments(exceptKey) {
               try {
-                  var today = todayUtc();
-                  var stale = [];
+                  var others = [];
                   for (var i = 0; i < localStorage.length; i++) {
                       var k = localStorage.key(i);
-                      if (!k || k.indexOf(KEY_PREFIX) !== 0 || k === exceptKey) continue;
-                      try {
-                          var rec = JSON.parse(localStorage.getItem(k));
-                          if (rec && typeof rec.exp === "string" && rec.exp < today) stale.push(k);
-                      } catch (e) { /* unreadable entry: leave it */ }
+                      if (k && k.indexOf(KEY_PREFIX) === 0 && k !== exceptKey) others.push(k);
                   }
-                  for (var j = 0; j < stale.length; j++) localStorage.removeItem(stale[j]);
+                  for (var j = 0; j < others.length; j++) localStorage.removeItem(others[j]);
               } catch (e) { /* ignore */ }
           }
 
@@ -113,7 +107,7 @@
                       rec = { v: Math.random() < 0.5 ? ORIGINAL : VARIANT, a: randomHex32() };
                   }
                   localStorage.setItem(key, JSON.stringify({ v: rec.v, a: rec.a, exp: toDate }));
-                  cleanExpired(key);
+                  removeOtherAssignments(key);
                   return { v: rec.v, a: rec.a };
               } catch (e) {
                   return null;

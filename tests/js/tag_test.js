@@ -95,3 +95,17 @@ Deno.test("legacy-vägen använder localStorage", async () => {
   assertEquals(JSON.parse(env.localStorage.getItem("sabt:9")).exp, today(3));
   assertEquals(env.cookieWrites, []);
 });
+
+Deno.test("andra testers poster tas bort, även giltiga (ett test per sajt)", async () => {
+  const ls = makeStorage({
+    "sabt:3": JSON.stringify({ v: "2", a: "b".repeat(32), exp: today(30) }),
+    "sabt:4": "inte json",
+    "other": "x",
+  });
+  const env = makeEnv({ fetchData: live(), localStorage: ls });
+  await loadTag(P, env).fire();
+  assertEquals(ls.getItem("sabt:3"), null);
+  assertEquals(ls.getItem("sabt:4"), null);
+  assertEquals(ls.getItem("other"), "x");
+  assert(ls.getItem("sabt:7") !== null);
+});

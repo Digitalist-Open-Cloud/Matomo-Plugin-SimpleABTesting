@@ -30,16 +30,26 @@
       return null;
   }
 
+  function trackingParams() {
+      var assignment = getActiveAssignment();
+      if (!assignment) {
+          return '';
+      }
+      return '&sabt=' + assignment.v + '&sabi=' + encodeURIComponent(assignment.id) + '&saba=' + assignment.a;
+  }
+
+  // The same parameters on every request type the Matomo tracker sends
+  // through a plugin hook, so a conversion (goal, event, link, ecommerce)
+  // made without a new pageview still counts for the assignment.
+  var HOOKS = ['log', 'link', 'goal', 'event', 'sitesearch', 'ecommerce', 'ping',
+      'contentImpression', 'contentInteraction'];
+
   function init() {
-      Matomo.addPlugin('SimpleABTesting', {
-          log: function () {
-              var assignment = getActiveAssignment();
-              if (!assignment) {
-                  return '';
-              }
-              return '&sabt=' + assignment.v + '&sabi=' + encodeURIComponent(assignment.id) + '&saba=' + assignment.a;
-          },
-      });
+      var plugin = {};
+      for (var i = 0; i < HOOKS.length; i++) {
+          plugin[HOOKS[i]] = trackingParams;
+      }
+      Matomo.addPlugin('SimpleABTesting', plugin);
   }
 
   // If Matomo object exists, initialize the plugin
