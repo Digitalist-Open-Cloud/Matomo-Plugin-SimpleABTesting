@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.99] - 2026-11-10
+
+### Fixed
+
+- `Updates/0.1.98.php` crashed `core:update` from 0.1.97 with "Call to a member
+  function sql() on null": the class used `$this->migration` without a
+  constructor receiving the migration factory. It now takes
+  `Piwik\Updater\Migration\Factory`, so the three ALTERs (`idexperiment`,
+  `assignment_id`, `idx_visit_time`) run on upgrade.
+
 ## [0.1.98] - 2026-10-17
 
 ### Added
