@@ -5,6 +5,7 @@ namespace Piwik\Plugins\SimpleABTesting;
 use Piwik\Common;
 use Piwik\Updater;
 use Piwik\Updater\Migration;
+use Piwik\Updater\Migration\Factory as MigrationFactory;
 use Piwik\Updates as PiwikUpdates;
 
 /**
@@ -15,6 +16,16 @@ class Updates_0_1_98 extends PiwikUpdates
 {
     private const DUPLICATE_COLUMN = 1060;
     private const DUPLICATE_KEY = 1061;
+
+    /**
+     * @var MigrationFactory
+     */
+    private $migration;
+
+    public function __construct(MigrationFactory $factory)
+    {
+        $this->migration = $factory;
+    }
 
     public function getMigrations(Updater $updater)
     {
